@@ -81,7 +81,7 @@ public class JDFPlugin implements Plugin {
 	}
 	
 	@Command(value="update-stacks", help="Update the available JDF JBoss stacks list")
-	public void updateStacks(){
+	public void updateStacks() throws Exception{
 			stacksUtil.retrieveAvailableStacks();
 	}
 
