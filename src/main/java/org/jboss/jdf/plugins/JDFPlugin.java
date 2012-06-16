@@ -28,8 +28,8 @@ import javax.inject.Inject;
 
 import org.jboss.forge.project.Project;
 import org.jboss.forge.shell.ShellColor;
-import org.jboss.forge.shell.ShellPrompt;
 import org.jboss.forge.shell.plugins.Alias;
+import org.jboss.forge.shell.plugins.Command;
 import org.jboss.forge.shell.plugins.DefaultCommand;
 import org.jboss.forge.shell.plugins.Option;
 import org.jboss.forge.shell.plugins.PipeOut;
@@ -39,6 +39,7 @@ import org.jboss.jdf.plugins.cdi.JDFVersions;
 import org.jboss.jdf.plugins.providers.JDFBOMProvider;
 import org.jboss.jdf.plugins.providers.JDFStackProvider;
 import org.jboss.jdf.plugins.shell.JDFVersionCompleter;
+import org.jboss.jdf.plugins.stacks.StacksUtil;
 
 
 /**
@@ -54,16 +55,16 @@ public class JDFPlugin implements Plugin {
 	private List<String> jdfVersions;
 	
 	@Inject
-	private ShellPrompt prompt;
-	
-	@Inject
 	private Project project;
 	
 	@Inject
 	private BeanManager beanManager;
+	
+	@Inject
+	private StacksUtil stacksUtil;
 
-	@DefaultCommand
-	public void defaultCommand(@Option(name="stack", required=true) JDFStackProvider stack, 
+	@Command(value="install-stack", help="Install a JDF JBoss stack")
+	public void installStack(@Option(name="stack", required=true) JDFStackProvider stack, 
 			@Option(name="version", required=true, completer=JDFVersionCompleter.class) String version, PipeOut out) {
 		//validate input
 		if (!jdfVersions.contains(version)){
@@ -77,6 +78,11 @@ public class JDFPlugin implements Plugin {
 			jdfbomProvider.installBom(project, version);
 			out.println("Stack " + stack + " installed!");
 		}
+	}
+	
+	@Command(value="update-stacks", help="Update the available JDF JBoss stacks list")
+	public void updateStacks(){
+			stacksUtil.retrieveAvailableStacks();
 	}
 
 }
