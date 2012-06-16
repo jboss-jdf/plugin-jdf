@@ -1,13 +1,11 @@
 package org.jboss.jdf.plugins.stacks;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
 import org.apache.http.HttpResponse;
@@ -35,7 +33,8 @@ public class StacksUtil {
 	@Inject
 	private Shell shell;
 
-	public void retrieveAvailableStacks() throws Exception {
+	@Produces
+	public List<Stack> retrieveAvailableStacks() throws Exception {
 		String stacksRepo = getStacksRepo();
 		InputStream repoStream = getCachedRepoStream(stacksRepo);
 		if (repoStream == null) {
@@ -44,18 +43,9 @@ public class StacksUtil {
 			repoStream = getCachedRepoStream(stacksRepo);
 		}
 		List<Stack> stacks = populaStacksFromStream(repoStream);
-		shell.println(stacks.toString());
-
-	}
-	
-	public static void main(String[] args) throws FileNotFoundException {
-		File f = new File("/home/rafael/.forge/httpsrawgithubcomrafabenejdfpluginmasterstacksyaml.yaml");
-		FileInputStream fis = new FileInputStream(f);
-		StacksUtil s = new StacksUtil();
-		s.populaStacksFromStream(fis);
+		return stacks;
 	}
 
-	@SuppressWarnings({ "unchecked" })
 	private List<Stack> populaStacksFromStream(InputStream stream) {
 		List<Stack> stacksList = new ArrayList<Stack>();
 
@@ -69,13 +59,8 @@ public class StacksUtil {
 			if (o == null) {
 				continue;
 			}
-			
+
 			Stack stack = (Stack) o;
-//			stack.setId((String) map.get(Stack.PROP_ID));
-//			stack.setName((String) map.get(Stack.PROP_NAME));
-//			stack.setDescription((String) map.get(Stack.PROP_DESCRIPTION));
-//			stack.setArtifact((String) map.get(Stack.PROP_ARTIFACT));
-//			stack.getVersions().addAll((List<String>) map.get(Stack.PROP_VERSIONS));
 			stacksList.add(stack);
 		}
 		return stacksList;

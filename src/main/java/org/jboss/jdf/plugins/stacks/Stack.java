@@ -5,19 +5,13 @@ import java.util.List;
 
 public class Stack {
 
-	public static final String PROP_ID = "id";
-	public static final String PROP_NAME = "name";
-	public static final String PROP_DESCRIPTION = "description";
-	public static final String PROP_ARTIFACT = "artifact";
-	public static final String PROP_VERSIONS = "versions";
-
 	private String id;
 
 	private String name;
 
 	private String description;
 
-	private String artifact;
+	private String artfact;
 
 	private List<String> versions = new ArrayList<String>();
 
@@ -45,14 +39,15 @@ public class Stack {
 		this.description = description;
 	}
 
-	public String getArtifact() {
-		return artifact;
-	}
 
-	public void setArtifact(String artifact) {
-		this.artifact = artifact;
+	public String getArtfact() {
+		return artfact;
 	}
-
+	
+	public void setArtfact(String artfact) {
+		this.artfact = artfact;
+	}
+	
 	public List<String> getVersions() {
 		return versions;
 	}
@@ -60,4 +55,10 @@ public class Stack {
 	public void setVersions(List<String> versions) {
 		this.versions = versions;
 	}
+	
+	@Override
+	public String toString() {
+		return this.getId();
+	}
+	
 }

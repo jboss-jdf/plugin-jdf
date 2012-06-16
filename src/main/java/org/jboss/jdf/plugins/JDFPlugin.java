@@ -23,23 +23,19 @@ package org.jboss.jdf.plugins;
 
 import java.util.List;
 
-import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
 
-import org.jboss.forge.project.Project;
 import org.jboss.forge.shell.ShellColor;
 import org.jboss.forge.shell.plugins.Alias;
-import org.jboss.forge.shell.plugins.Command;
 import org.jboss.forge.shell.plugins.DefaultCommand;
 import org.jboss.forge.shell.plugins.Option;
 import org.jboss.forge.shell.plugins.PipeOut;
 import org.jboss.forge.shell.plugins.Plugin;
 import org.jboss.forge.shell.plugins.RequiresProject;
-import org.jboss.jdf.plugins.cdi.JDFVersions;
 import org.jboss.jdf.plugins.providers.JDFBOMProvider;
-import org.jboss.jdf.plugins.providers.JDFStackProvider;
+import org.jboss.jdf.plugins.shell.AvailableStacksCompleter;
 import org.jboss.jdf.plugins.shell.JDFVersionCompleter;
-import org.jboss.jdf.plugins.stacks.StacksUtil;
+import org.jboss.jdf.plugins.stacks.Stack;
 
 
 /**
@@ -50,39 +46,42 @@ import org.jboss.jdf.plugins.stacks.StacksUtil;
 @Alias("jdf")
 @RequiresProject
 public class JDFPlugin implements Plugin {
-	
-	@Inject @JDFVersions
-	private List<String> jdfVersions;
-	
-	@Inject
-	private Project project;
-	
-	@Inject
-	private BeanManager beanManager;
-	
-	@Inject
-	private StacksUtil stacksUtil;
 
-	@Command(value="install-stack", help="Install a JDF JBoss stack")
-	public void installStack(@Option(name="stack", required=true) JDFStackProvider stack, 
+	@Inject
+	private List<Stack> availableStacks;
+	
+	@Inject
+	private JDFBOMProvider bomProvider;
+
+	@DefaultCommand(help="Install a JDF JBoss Stack")
+	public void installStack(@Option(name="stack", required=true, completer=AvailableStacksCompleter.class) String stack, 
 			@Option(name="version", required=true, completer=JDFVersionCompleter.class) String version, PipeOut out) {
 		//validate input
-		if (!jdfVersions.contains(version)){
-			out.println(ShellColor.RED, "There is no available version [" + version + "]. Try one of those: " + jdfVersions);
+		Stack selectedStack = getSelectedStack(stack);
+		if (selectedStack == null){
+			out.println(ShellColor.RED, "There is no stack [" + stack + "]. Try one of those: " + availableStacks);
 			return;
 		}
-		JDFBOMProvider jdfbomProvider = stack.getProvider(beanManager);
-		if (jdfbomProvider.isDependencyManagementInstalled(project)){
+		
+		if (!selectedStack.getVersions().contains(version)){
+			out.println(ShellColor.RED, "There is no version [" + version + "] for this stack [" + selectedStack + "]. Try one of those: " + selectedStack.getVersions());
+		}
+		
+		if (bomProvider.isDependencyManagementInstalled(selectedStack.getArtfact())){
 			out.println("Stack " + stack + " already installed");
 		}else{
-			jdfbomProvider.installBom(project, version);
+			bomProvider.installBom(selectedStack.getArtfact(), version);
 			out.println("Stack " + stack + " installed!");
 		}
 	}
-	
-	@Command(value="update-stacks", help="Update the available JDF JBoss stacks list")
-	public void updateStacks() throws Exception{
-			stacksUtil.retrieveAvailableStacks();
+
+	private Stack getSelectedStack(String informedStack) {
+		for(Stack stack: availableStacks){
+			if (stack.getId().equals(informedStack)){
+				return stack;
+			}
+		}
+		return null;
 	}
 
 }
