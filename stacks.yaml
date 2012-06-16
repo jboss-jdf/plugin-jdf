@@ -5,7 +5,7 @@ artfact: jboss-javaee-6.0-with-errai
 versions: 
  - 1.0.0.Final
 ---
-id:jboss-javaee-6.0-with-hibernate
+id: jboss-javaee-6.0-with-hibernate
 name: Java EE with Hibernate
 description: Historically, Hibernate facilitated the storage and retrieval of Java domain objects via Object/Relational Mapping. Today, Hibernate is a collection of related projects enabling developers to utilize POJO-style domain models in their applications in ways extending well beyond Object/Relational Mapping. This BOM builds on the Java EE full profile BOM, adding Hibernate Community projects including Hibernate ORM, Hibernate Search and Hibernate Validator. It also provides tool projects such as Hibernate JPA Model Gen and Hibernate Validator Annotation Processor.
 artfact: jboss-javaee-6.0-with-hibernate
