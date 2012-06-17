@@ -56,15 +56,15 @@ public class JDFPlugin implements Plugin {
 	@DefaultCommand(help="Install a JDF JBoss Stack")
 	public void installStack(@Option(name="stack", required=true, completer=AvailableStacksCompleter.class) String stack, 
 			@Option(name="version", required=true, completer=JDFVersionCompleter.class) String version, PipeOut out) {
-		//validate input
 		Stack selectedStack = getSelectedStack(stack);
+		//validate input
 		if (selectedStack == null){
 			out.println(ShellColor.RED, "There is no stack [" + stack + "]. Try one of those: " + availableStacks);
 			return;
 		}
-		
 		if (!selectedStack.getVersions().contains(version)){
 			out.println(ShellColor.RED, "There is no version [" + version + "] for this stack [" + selectedStack + "]. Try one of those: " + selectedStack.getVersions());
+			return;
 		}
 		
 		if (bomProvider.isDependencyManagementInstalled(selectedStack.getArtfact())){
