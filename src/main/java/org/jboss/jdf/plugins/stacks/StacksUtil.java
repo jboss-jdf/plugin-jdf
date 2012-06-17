@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
@@ -14,13 +15,14 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.jboss.forge.resources.FileResource;
 import org.jboss.forge.shell.Shell;
+import org.jboss.forge.shell.ShellColor;
 import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.constructor.CustomClassLoaderConstructor;
 
 /**
- * This is a Utility class that handle the JDF BOMs
+ * This is a Utility class that handle the available JDF Stacks from a repository using YAML
  * 
  * @author <a href="mailto:benevides@redhat.com">Rafael Benevides</a>
  * 
@@ -33,20 +35,45 @@ public class StacksUtil {
 	@Inject
 	private Shell shell;
 
-	@Produces
-	public List<Stack> retrieveAvailableStacks() throws Exception {
+	/**
+	 * This method verifies all available Stacks in repository
+	 * 
+	 * @return Available Stacks
+	 */
+	@Produces @ApplicationScoped
+	public List<Stack> retrieveAvailableStacks() {
 		String stacksRepo = getStacksRepo();
-		InputStream repoStream = getCachedRepoStream(stacksRepo);
+		InputStream repoStream = getCachedRepoStream(stacksRepo, true);
+		// if cache expired
 		if (repoStream == null) {
-			repoStream = retrieveStacksFromRemoteRepository(stacksRepo);
-			setCachedRepoStream(stacksRepo, repoStream);
-			repoStream = getCachedRepoStream(stacksRepo);
+			try {
+				repoStream = retrieveStacksFromRemoteRepository(stacksRepo);
+				setCachedRepoStream(stacksRepo, repoStream);
+			} catch (Exception e) {
+				// Maybe we're offline
+				shell.println();
+				shell.println(ShellColor.YELLOW, "It was not possible to contact the repository at " + DEFAULT_STACK_REPO);
+				shell.println(ShellColor.YELLOW, "Falling back to cache!");
+				repoStream = getCachedRepoStream(stacksRepo, false);
+			}
 		}
-		List<Stack> stacks = populaStacksFromStream(repoStream);
+		// If the Repostream stills empty after falling back to cache
+		if (repoStream == null) {
+			shell.println(ShellColor.RED, "The Cache is empty. Try going online to get the list of available JDF Stacks!");
+			return null;
+		}
+		List<Stack> stacks = populateStacksFromStream(repoStream);
 		return stacks;
+
 	}
 
-	private List<Stack> populaStacksFromStream(InputStream stream) {
+	/**
+	 * Parses the Stream and converts YAML content to a Javabean
+	 * 
+	 * @param stream
+	 * @return the converted list of stacks
+	 */
+	private List<Stack> populateStacksFromStream(InputStream stream) {
 		List<Stack> stacksList = new ArrayList<Stack>();
 
 		Constructor constructor = new CustomClassLoaderConstructor(Stack.class, this.getClass().getClassLoader());
@@ -68,14 +95,13 @@ public class StacksUtil {
 
 	private InputStream retrieveStacksFromRemoteRepository(String stacksRepo) throws ClientProtocolException, IOException {
 		HttpGet httpGet = new HttpGet(stacksRepo);
-
 		DefaultHttpClient client = new DefaultHttpClient();
-		// Available in Forge 1.0.6 - configureProxy(ProxySettings.fromForgeConfiguration(configuration), client);
+		//TODO Available in Forge 1.0.6 - configureProxy(ProxySettings.fromForgeConfiguration(configuration), client);
 		HttpResponse httpResponse = client.execute(httpGet);
-
+		shell.println();
 		switch (httpResponse.getStatusLine().getStatusCode()) {
 		case 200:
-			shell.println("connected!");
+			shell.println("connected to repository!");
 			break;
 
 		case 404:
@@ -89,23 +115,20 @@ public class StacksUtil {
 		return httpResponse.getEntity().getContent();
 	}
 
-	@SuppressWarnings("unchecked")
-	private InputStream getCachedRepoStream(String repo) {
-		FileResource<?> cachedRepo = shell.getEnvironment().getConfigDirectory().getChildOfType(FileResource.class, repo.replaceAll("[^a-zA-Z0-9]+", "") + ".yaml");
+	private InputStream getCachedRepoStream(String repo, boolean online) {
+		FileResource<?> cachedRepo = getCacheFileResource(repo);
 		if (cachedRepo.exists()) {
 			long lastModified = cachedRepo.getUnderlyingResourceObject().lastModified();
-			if (System.currentTimeMillis() - lastModified <= 60000) {
+			//if online, consider the cache valid until it expires after 1 minute
+			if (!online || System.currentTimeMillis() - lastModified <= (1000 * 60)) {
 				return cachedRepo.getResourceInputStream();
-			} else {
-				cachedRepo.delete();
 			}
 		}
 		return null;
 	}
 
-	@SuppressWarnings("unchecked")
 	private void setCachedRepoStream(String repo, InputStream stream) {
-		FileResource<?> cachedRepo = shell.getEnvironment().getConfigDirectory().getChildOfType(FileResource.class, repo.replaceAll("[^a-zA-Z0-9]+", "") + ".yaml");
+		FileResource<?> cachedRepo = getCacheFileResource(repo);
 		if (!cachedRepo.exists()) {
 			cachedRepo.createNewFile();
 		}
@@ -118,6 +141,11 @@ public class StacksUtil {
 			stacksRepo = DEFAULT_STACK_REPO;
 		}
 		return stacksRepo;
+	}
+
+	@SuppressWarnings("unchecked")
+	private FileResource<?> getCacheFileResource(String repo) {
+		return shell.getEnvironment().getConfigDirectory().getChildOfType(FileResource.class, repo.replaceAll("[^a-zA-Z0-9]+", "") + ".yaml");
 	}
 
 	/*

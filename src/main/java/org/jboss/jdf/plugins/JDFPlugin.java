@@ -52,7 +52,7 @@ public class JDFPlugin implements Plugin {
 	
 	@Inject
 	private JDFBOMProvider bomProvider;
-
+	
 	@DefaultCommand(help="Install a JDF JBoss Stack")
 	public void installStack(@Option(name="stack", required=true, completer=AvailableStacksCompleter.class) String stack, 
 			@Option(name="version", required=true, completer=JDFVersionCompleter.class) String version, PipeOut out) {
