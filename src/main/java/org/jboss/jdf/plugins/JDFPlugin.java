@@ -37,7 +37,6 @@ import org.jboss.jdf.plugins.shell.AvailableStacksCompleter;
 import org.jboss.jdf.plugins.shell.JDFVersionCompleter;
 import org.jboss.jdf.plugins.stacks.Stack;
 
-
 /**
  * The JDF Plugin itself
  * 
@@ -49,35 +48,35 @@ public class JDFPlugin implements Plugin {
 
 	@Inject
 	private List<Stack> availableStacks;
-	
+
 	@Inject
 	private JDFBOMProvider bomProvider;
-	
-	@DefaultCommand(help="Install a JDF JBoss Stack")
-	public void installStack(@Option(name="stack", required=true, completer=AvailableStacksCompleter.class) String stack, 
-			@Option(name="version", required=true, completer=JDFVersionCompleter.class) String version, PipeOut out) {
+
+	@DefaultCommand(help = "Install a JDF JBoss Stack")
+	public void installStack(@Option(name = "stack", required = true, completer = AvailableStacksCompleter.class) String stack,
+			@Option(name = "version", required = true, completer = JDFVersionCompleter.class) String version, PipeOut out) {
 		Stack selectedStack = getSelectedStack(stack);
-		//validate input
-		if (selectedStack == null){
+		// validate input
+		if (selectedStack == null) {
 			out.println(ShellColor.RED, "There is no stack [" + stack + "]. Try one of those: " + availableStacks);
 			return;
 		}
-		if (!selectedStack.getVersions().contains(version)){
+		if (!selectedStack.getVersions().contains(version)) {
 			out.println(ShellColor.RED, "There is no version [" + version + "] for this stack [" + selectedStack + "]. Try one of those: " + selectedStack.getVersions());
 			return;
 		}
-		
-		if (bomProvider.isDependencyManagementInstalled(selectedStack.getArtifact())){
+
+		if (bomProvider.isDependencyManagementInstalled(selectedStack.getArtifact())) {
 			out.println("Stack " + stack + " already installed");
-		}else{
+		} else {
 			bomProvider.installBom(selectedStack.getArtifact(), version);
 			out.println("Stack " + stack + " installed!");
 		}
 	}
 
 	private Stack getSelectedStack(String informedStack) {
-		for(Stack stack: availableStacks){
-			if (stack.getId().equals(informedStack)){
+		for (Stack stack : availableStacks) {
+			if (stack.getId().equals(informedStack)) {
 				return stack;
 			}
 		}
