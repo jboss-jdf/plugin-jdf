@@ -11,7 +11,7 @@ public class Stack {
 
 	private String description;
 
-	private String artfact;
+	private String artifact;
 
 	private List<String> versions = new ArrayList<String>();
 
@@ -40,12 +40,12 @@ public class Stack {
 	}
 
 
-	public String getArtfact() {
-		return artfact;
+	public String getArtifact() {
+		return artifact;
 	}
 	
-	public void setArtfact(String artfact) {
-		this.artfact = artfact;
+	public void setArtifact(String artfact) {
+		this.artifact = artfact;
 	}
 	
 	public List<String> getVersions() {

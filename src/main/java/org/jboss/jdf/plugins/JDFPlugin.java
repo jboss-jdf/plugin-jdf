@@ -67,10 +67,10 @@ public class JDFPlugin implements Plugin {
 			return;
 		}
 		
-		if (bomProvider.isDependencyManagementInstalled(selectedStack.getArtfact())){
+		if (bomProvider.isDependencyManagementInstalled(selectedStack.getArtifact())){
 			out.println("Stack " + stack + " already installed");
 		}else{
-			bomProvider.installBom(selectedStack.getArtfact(), version);
+			bomProvider.installBom(selectedStack.getArtifact(), version);
 			out.println("Stack " + stack + " installed!");
 		}
 	}

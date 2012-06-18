@@ -145,7 +145,7 @@ public class StacksUtil {
 
 	@SuppressWarnings("unchecked")
 	private FileResource<?> getCacheFileResource(String repo) {
-		return shell.getEnvironment().getConfigDirectory().getChildOfType(FileResource.class, repo.replaceAll("[^a-zA-Z0-9]+", "") + ".yaml");
+		return shell.getEnvironment().getConfigDirectory().getChildOfType(FileResource.class, "stacks.yaml");
 	}
 
 	/*
