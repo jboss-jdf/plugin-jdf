@@ -77,4 +77,10 @@ public class JdfPluginTest extends AbstractShellTest {
 		Assert.assertTrue("Stack should be installed", bomProvider.isDependencyManagementInstalled(STACK_ARTIFACT));
 	}
 	
+	@Test
+	public void testStackRepoFile() throws Exception{
+		String repo = stacksUtil.getStacksRepo();
+		Assert.assertEquals(StacksUtil.DEFAULT_STACK_REPO, repo);
+	}
+	
 }

@@ -41,7 +41,7 @@ import org.yaml.snakeyaml.constructor.CustomClassLoaderConstructor;
  */
 public class StacksUtil {
 
-	private static final String DEFAULT_STACK_REPO = "https://raw.github.com/rafabene/jdf-plugin/master/stacks.yaml";
+	public static final String DEFAULT_STACK_REPO = "https://raw.github.com/rafabene/jdf-plugin/master/stacks.yaml";
 
 	@Inject
 	private Shell shell;
@@ -168,7 +168,7 @@ public class StacksUtil {
 		cachedRepo.setContents(stream);
 	}
 
-	private String getStacksRepo() {
+	public String getStacksRepo() {
 		FileResource<?> jdfConfigFile = getJDFConfig();
 		if (!jdfConfigFile.exists()) {
 			// Creates an empty file
