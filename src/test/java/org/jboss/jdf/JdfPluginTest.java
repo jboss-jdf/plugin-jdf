@@ -21,36 +21,60 @@
  */
 package org.jboss.jdf;
 
+import java.util.List;
+
+import javax.inject.Inject;
+
+import junit.framework.Assert;
+
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.forge.test.AbstractShellTest;
 import org.jboss.jdf.plugins.JDFPlugin;
+import org.jboss.jdf.plugins.providers.JDFBOMProvider;
+import org.jboss.jdf.plugins.stacks.Stack;
+import org.jboss.jdf.plugins.stacks.StacksUtil;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
+import org.junit.Before;
 import org.junit.Test;
 
-public class JdfPluginTest extends AbstractShellTest
-{
-   @Deployment
-   public static JavaArchive getDeployment()
-   {
-      return AbstractShellTest.getDeployment().addPackages(true, JDFPlugin.class.getPackage());
-   }
+public class JdfPluginTest extends AbstractShellTest {
 
-   @Test
-   public void testDefaultCommand() throws Exception
-   {
-      getShell().execute("jdfplugin");
-   }
+	private static final String STACK_ARTIFACT = "jboss-javaee-6.0-with-errai";
+	private static final String STACK_VERSION = "1.0.0.Final";
 
-   @Test
-   public void testCommand() throws Exception
-   {
-      getShell().execute("jdfplugin command");
-   }
+	@Inject
+	private JDFBOMProvider bomProvider;
 
-   @Test
-   public void testPrompt() throws Exception
-   {
-      queueInputLines("y");
-      getShell().execute("jdfplugin prompt foo bar");
-   }
+	@Inject
+	private StacksUtil stacksUtil;
+	
+	@Before
+	public void setup() throws Exception {
+		initializeJavaProject();
+	}
+
+	@Deployment
+	public static JavaArchive getDeployment() {
+		return AbstractShellTest.getDeployment().addPackages(true, JDFPlugin.class.getPackage());
+	}
+
+	@Test
+	public void testShellexecute() throws Exception {
+		queueInputLines("y");
+		getShell().execute("jdf --stack " + STACK_ARTIFACT + " --version " + STACK_VERSION);
+	}
+
+	@Test
+	public void testAvailableStacks() throws Exception {
+		List<Stack> availableStacks = stacksUtil.retrieveAvailableStacks();
+		Assert.assertTrue(availableStacks.size() == 4);
+	}
+
+	@Test
+	public void testBOMInstallation() throws Exception {
+		Assert.assertFalse(bomProvider.isDependencyManagementInstalled(STACK_ARTIFACT));
+		bomProvider.installBom(STACK_ARTIFACT, STACK_VERSION);
+		Assert.assertTrue("Stack should be installed", bomProvider.isDependencyManagementInstalled(STACK_ARTIFACT));
+	}
+	
 }

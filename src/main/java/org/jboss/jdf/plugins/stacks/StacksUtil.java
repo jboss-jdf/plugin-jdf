@@ -1,7 +1,11 @@
 package org.jboss.jdf.plugins.stacks;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,8 +20,11 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.params.ConnRoutePNames;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.jboss.forge.ForgeEnvironment;
 import org.jboss.forge.env.Configuration;
 import org.jboss.forge.env.ConfigurationScope;
+import org.jboss.forge.parser.xml.Node;
+import org.jboss.forge.parser.xml.XMLParser;
 import org.jboss.forge.resources.FileResource;
 import org.jboss.forge.shell.Shell;
 import org.jboss.forge.shell.ShellColor;
@@ -34,7 +41,6 @@ import org.yaml.snakeyaml.constructor.CustomClassLoaderConstructor;
  */
 public class StacksUtil {
 
-	private static final String PROP_STACKS_REPO = "STACKS_REPO";
 	private static final String DEFAULT_STACK_REPO = "https://raw.github.com/rafabene/jdf-plugin/master/stacks.yaml";
 
 	@Inject
@@ -42,6 +48,9 @@ public class StacksUtil {
 
 	@Inject
 	private Configuration configuration;
+
+	@Inject
+	private ForgeEnvironment environment;
 
 	/**
 	 * This method verifies all available Stacks in repository
@@ -51,7 +60,7 @@ public class StacksUtil {
 	@Produces
 	public List<Stack> retrieveAvailableStacks() {
 		String stacksRepo = getStacksRepo();
-		InputStream repoStream = getCachedRepoStream(stacksRepo, true);
+		InputStream repoStream = getCachedRepoStream(stacksRepo, environment.isOnline());
 		// if cache expired
 		if (repoStream == null) {
 			try {
@@ -60,9 +69,11 @@ public class StacksUtil {
 				setCachedRepoStream(stacksRepo, repoStream);
 				repoStream = getCachedRepoStream(stacksRepo, true);
 			} catch (Exception e) {
-				// Maybe we're offline
+				if (shell.isVerbose()) {
+					e.printStackTrace();
+				}
 				shell.println();
-				shell.println(ShellColor.YELLOW, "It was not possible to contact the repository at " + DEFAULT_STACK_REPO);
+				shell.println(ShellColor.YELLOW, "It was not possible to contact the repository at " + stacksRepo);
 				shell.println(ShellColor.YELLOW, "Falling back to cache!");
 				repoStream = getCachedRepoStream(stacksRepo, false);
 			}
@@ -110,26 +121,31 @@ public class StacksUtil {
 		return stacksList;
 	}
 
-	private InputStream retrieveStacksFromRemoteRepository(final String stacksRepo) throws ClientProtocolException, IOException {
-		HttpGet httpGet = new HttpGet(stacksRepo);
-		DefaultHttpClient client = new DefaultHttpClient();
-		configureProxy(client);
-		HttpResponse httpResponse = client.execute(httpGet);
-		shell.println();
-		switch (httpResponse.getStatusLine().getStatusCode()) {
-		case 200:
-			showVerboseMessage("Connected to repository! Getting available Stacks");
-			break;
+	private InputStream retrieveStacksFromRemoteRepository(final String stacksRepo) throws ClientProtocolException, IOException, URISyntaxException {
+		if (stacksRepo.startsWith("http")){
+			HttpGet httpGet = new HttpGet(stacksRepo);
+			DefaultHttpClient client = new DefaultHttpClient();
+			configureProxy(client);
+			HttpResponse httpResponse = client.execute(httpGet);
+			shell.println();
+			switch (httpResponse.getStatusLine().getStatusCode()) {
+			case 200:
+				showVerboseMessage("Connected to repository! Getting available Stacks");
+				break;
 
-		case 404:
-			shell.println("Failed! (Stacks file not found: " + stacksRepo + ")");
-			return null;
+			case 404:
+				shell.println("Failed! (Stacks file not found: " + stacksRepo + ")");
+				return null;
 
-		default:
-			shell.println("Failed! (server returned status code: " + httpResponse.getStatusLine().getStatusCode());
-			return null;
+			default:
+				shell.println("Failed! (server returned status code: " + httpResponse.getStatusLine().getStatusCode());
+				return null;
+			}
+			return httpResponse.getEntity().getContent();
+		}else if (stacksRepo.startsWith("file")){
+			return new FileInputStream(new File(URI.create(stacksRepo)));
 		}
-		return httpResponse.getEntity().getContent();
+		return null;
 	}
 
 	private InputStream getCachedRepoStream(final String repo, final boolean online) {
@@ -153,16 +169,30 @@ public class StacksUtil {
 	}
 
 	private String getStacksRepo() {
-		String stacksRepo = (String) shell.getEnvironment().getProperty(PROP_STACKS_REPO);
-		if (stacksRepo == null) {
-			stacksRepo = DEFAULT_STACK_REPO;
+		FileResource<?> jdfConfigFile = getJDFConfig();
+		if (!jdfConfigFile.exists()) {
+			// Creates an empty file
+			jdfConfigFile.createNewFile();
+			// Put default Content
+			Node xml = new Node("config");
+			Node stacksRepo = xml.getOrCreate("stacksRepo");
+			if (stacksRepo.getText() == null) {
+				stacksRepo.text(DEFAULT_STACK_REPO);
+			}
+			jdfConfigFile.setContents(XMLParser.toXMLString(xml));
 		}
-		return stacksRepo;
+		String repo = XMLParser.parse(jdfConfigFile.getResourceInputStream()).getSingle("config").getSingle("stacksRepo").getText();
+		return repo;
 	}
 
 	@SuppressWarnings("unchecked")
 	private FileResource<?> getCacheFileResource(final String repo) {
 		return shell.getEnvironment().getConfigDirectory().getChildOfType(FileResource.class, "stacks.yaml");
+	}
+
+	@SuppressWarnings("unchecked")
+	private FileResource<?> getJDFConfig() {
+		return shell.getEnvironment().getConfigDirectory().getChildOfType(FileResource.class, "jdfconfig.xml");
 	}
 
 	private void configureProxy(final DefaultHttpClient client) {
