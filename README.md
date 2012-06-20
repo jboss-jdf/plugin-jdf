@@ -57,11 +57,10 @@ and retrieve the list of available JDF Stacks.
 
 OBS: If this is the first time that you use this plugin, you should be online.
 
-You can also type the complete command:  
-
-{code}
+You can also type the complete command: 
+`
 jdf --stack jboss-javaee-6.0-with-errai --version 1.0.0.Final
-{code}
+`
 
 You can add multiples stacks to your project
 
@@ -76,14 +75,12 @@ The jdf config file (jdfconfig.xml) is located inside forge config dir.
 
 1. Open the user configuration in ~/.forge/config.xml (located in your home directory.)
 2. Add the 'jdf' tag and required information inside the 'configuration' root tag:  
-
-{code}
-<configuration>
+`<configuration>
    <jdf>
    	<stacksRepo>file:///home/benevides/stacks.yaml</stacksRepo>
    </jdf>
 </configuration>
-{code}
+`
 
 
 
@@ -101,10 +98,9 @@ If for any reason you can not be online, the plugin will use a previously stored
 cache file as source of available stacks.
 
 If you want to force the offline use, you can set the OFFLINE property typing:  
-
-{code}
+`
 set OFFLINE true
-{code}
+`
 
 
 
@@ -112,8 +108,7 @@ Troubleshooting
 ---------------
 
 If you're experiencing some problems, you can turn on debug messages setting
-the VERBOSE property typing:
-  
-{code}
+the VERBOSE property typing: 
+`
 set VERBOSE true
-{code}
+`
