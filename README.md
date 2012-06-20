@@ -37,7 +37,7 @@ Run forge console by typing
 `forge.bat` -- Windows
 
 After in Forge prompt type  
-`$ forge install-plugin jdf `
+`$ forge git-plugin https://github.com/jboss-jdf/plugin-jdf.git `
 
 
 
@@ -63,26 +63,26 @@ You can add multiples stacks to your project
 Custom Repository
 -----------------
 
-If for any reason you want to change de default repository location, you can edit the jdf plugin config file.
+If for any reason you want to change the default repository location, you must configure the jdf settings in Forge
 
 The jdf config file (jdfconfig.xml) is located inside forge config dir.
 
-The informations where forge config dir is located type
-list-properties in you forge console and look the FORGE_CONFIG_DIR property
-
-You can use http, https and file protocols. If you want to use a file store in your filesystem use the following construction as an example.
-
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<config>
-  <stacksRepo>file:///home/benevides/stacks.yaml</stacksRepo>
-</config>
+1. Open the user configuration in ~/.forge/config.xml (located in your home directory.)
+2. Add the 'jdf' tag and required information inside the 'configuration' root tag:
+{code}
+<configuration>
+   <jdf>
+   	<stacksRepo>file:///home/benevides/stacks.yaml</stacksRepo>
+   </jdf>
+</configuration>
+{code}
 
 
 
 Proxy Configuration
 -------------------
 If your are accessing Internet through a proxy, you should configure Forge
-For more information take a look at:....
+For more information take a look at https://docs.jboss.org/author/display/FORGE/Configure+HTTP+Proxy
 
 
 
