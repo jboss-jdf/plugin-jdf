@@ -1,0 +1,108 @@
+jdf-plugin: A Plugin for JBoss Forge to enable the JDF BOM Stacks
+===========
+Author: Rafael Benevides
+
+
+What is it?
+-----------
+
+This is a plugin for [JBoss Forge] (http://jboss.org/forge) to simplify the setup
+of a [JDF - JBoss Developer Framework] (http://www.jboss.org/jdf/) Stack 
+
+The Stack is provided through the BOM concept. BOM is the abbreviation for Bill of Materials.
+More information about the BOM concept can be found at http://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html
+
+JDF provides some BOMs each one for each available Stack. 
+For more detailed information of each Stack you take a look at: http://www.jboss.org/jdf/stack/jboss-bom/
+
+The propose of this plugin is to help the developers to add a JDF Stack to a Project.
+
+
+
+System requirements
+-------------------
+
+All you need is to use this plugin is JBoss Forge 1.0.5 (or latter) and
+an active Internet connection (at least for the first use of the plugin).
+
+
+
+
+Installing the plugin
+---------------------
+
+Run forge console by typing
+
+`forge` -- Linux
+`forge.bat` -- Windows
+
+After in Forge prompt type  
+`$ forge install-plugin jdf `
+
+
+
+Running the plugin
+-------------------
+
+In Forge console type:
+`jdf --stack [TAB]`
+
+this should connect to the JDF Stacks repository 
+(default to https://raw.github.com/rafabene/jdf-plugin/master/stacks.yaml)
+and retrieve the list of available JDF Stacks.
+
+OBS: If this is the first time that you use this plugin, you should be online.
+
+You can also type the complete command:
+jdf --stack jboss-javaee-6.0-with-errai --version 1.0.0.Final
+
+You can add multiples stacks to your project
+
+
+
+Custom Repository
+-----------------
+
+If for any reason you want to change de default repository location, you can edit the jdf plugin config file.
+
+The jdf config file (jdfconfig.xml) is located inside forge config dir.
+
+The informations where forge config dir is located type
+list-properties in you forge console and look the FORGE_CONFIG_DIR property
+
+You can use http, https and file protocols. If you want to use a file store in your filesystem use the following construction as an example.
+
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<config>
+  <stacksRepo>file:///home/benevides/stacks.yaml</stacksRepo>
+</config>
+
+
+
+Proxy Configuration
+-------------------
+If your are accessing Internet through a proxy, you should configure Forge
+For more information take a look at:....
+
+
+
+Offline use
+------------
+
+If for any reason you can not be online, the plugin will use a previously stored
+cache file as source of available stacks.
+
+If you want to force the offline use, you can set the OFFLINE property typing:
+set OFFLINE true
+
+
+
+Troubleshooting
+---------------
+
+If you're experiencing some problems, you can turn on debug messages setting
+the VERBOSE property typing:
+
+set VERBOSE true
+
+
