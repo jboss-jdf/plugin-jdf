@@ -42,7 +42,7 @@ import org.yaml.snakeyaml.constructor.CustomClassLoaderConstructor;
 public class StacksUtil
 {
 
-   public static final String DEFAULT_STACK_REPO = "https://raw.github.com/rafabene/jdf-plugin/master/stacks.yaml";
+   public static final String DEFAULT_STACK_REPO = "https://raw.github.com/jboss-jdf/jdf-stack/master/stacks.yaml";
 
    @Inject
    private Shell shell;
