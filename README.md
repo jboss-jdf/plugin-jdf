@@ -16,9 +16,9 @@ The Stack is provided through the BOM concept. BOM is the abbreviation for Bill 
 More information about the BOM concept can be found at http://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html
 
 JDF provides some BOMs each one for each available Stack. 
-For more detailed information of each Stack you take a look at: http://www.jboss.org/jdf/stack/jboss-bom/
+For more detailed information of each Stack you can take a look at: http://www.jboss.org/jdf/stack/jboss-bom/
 
-The propose of this plugin is to help the developers to add a JDF Stack to a Project.
+The purpose of this plugin is to help the developers to add a JDF Stack to a Project.
 
 
 
@@ -36,7 +36,8 @@ Installing the plugin
 
 Run forge console by typing
 
-`forge` -- Linux
+`forge` -- Linux  
+
 `forge.bat` -- Windows
 
 After in Forge prompt type  
@@ -57,7 +58,9 @@ and retrieve the list of available JDF Stacks.
 OBS: If this is the first time that you use this plugin, you should be online.
 
 You can also type the complete command:
+{code}
 jdf --stack jboss-javaee-6.0-with-errai --version 1.0.0.Final
+{code}
 
 You can add multiples stacks to your project
 
@@ -71,7 +74,8 @@ If for any reason you want to change the default repository location, you must c
 The jdf config file (jdfconfig.xml) is located inside forge config dir.
 
 1. Open the user configuration in ~/.forge/config.xml (located in your home directory.)
-2. Add the 'jdf' tag and required information inside the 'configuration' root tag:
+2. Add the 'jdf' tag and required information inside the 'configuration' root tag:  
+
 {code}
 <configuration>
    <jdf>
@@ -95,8 +99,10 @@ Offline use
 If for any reason you can not be online, the plugin will use a previously stored
 cache file as source of available stacks.
 
-If you want to force the offline use, you can set the OFFLINE property typing:
+If you want to force the offline use, you can set the OFFLINE property typing:  
+{code}
 set OFFLINE true
+{code}
 
 
 
@@ -104,7 +110,7 @@ Troubleshooting
 ---------------
 
 If you're experiencing some problems, you can turn on debug messages setting
-the VERBOSE property typing:
-
+the VERBOSE property typing:  
+{code}
 set VERBOSE true
-
+{code}
