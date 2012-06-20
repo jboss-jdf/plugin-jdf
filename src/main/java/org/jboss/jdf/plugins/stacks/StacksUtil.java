@@ -23,8 +23,6 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.jboss.forge.ForgeEnvironment;
 import org.jboss.forge.env.Configuration;
 import org.jboss.forge.env.ConfigurationScope;
-import org.jboss.forge.parser.xml.Node;
-import org.jboss.forge.parser.xml.XMLParser;
 import org.jboss.forge.resources.FileResource;
 import org.jboss.forge.shell.Shell;
 import org.jboss.forge.shell.ShellColor;
@@ -194,22 +192,16 @@ public class StacksUtil
 
    public String getStacksRepo()
    {
-      FileResource<?> jdfConfigFile = getJDFConfig();
-      if (!jdfConfigFile.exists())
+      String repo = DEFAULT_STACK_REPO;
+      Configuration jdfConfig = configuration.getScopedConfiguration(ConfigurationScope.USER).subset("jdf");
+      if (jdfConfig != null && !jdfConfig.isEmpty())
       {
-         // Creates an empty file
-         jdfConfigFile.createNewFile();
-         // Put default Content
-         Node xml = new Node("config");
-         Node stacksRepo = xml.getOrCreate("stacksRepo");
-         if (stacksRepo.getText() == null)
+         String stacksRepoInConfig = jdfConfig.getString("stacksRepo");
+         if (stacksRepoInConfig != null)
          {
-            stacksRepo.text(DEFAULT_STACK_REPO);
+            repo = stacksRepoInConfig;
          }
-         jdfConfigFile.setContents(XMLParser.toXMLString(xml));
       }
-      String repo = XMLParser.parse(jdfConfigFile.getResourceInputStream()).getSingle("config").getSingle("stacksRepo")
-               .getText();
       return repo;
    }
 
@@ -217,12 +209,6 @@ public class StacksUtil
    private FileResource<?> getCacheFileResource(final String repo)
    {
       return shell.getEnvironment().getConfigDirectory().getChildOfType(FileResource.class, "stacks.yaml");
-   }
-
-   @SuppressWarnings("unchecked")
-   private FileResource<?> getJDFConfig()
-   {
-      return shell.getEnvironment().getConfigDirectory().getChildOfType(FileResource.class, "jdfconfig.xml");
    }
 
    private void configureProxy(final DefaultHttpClient client)
