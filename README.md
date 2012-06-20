@@ -48,7 +48,7 @@ In Forge console type:
 `jdf --stack [TAB]`
 
 this should connect to the JDF Stacks repository 
-(default to https://raw.github.com/rafabene/jdf-plugin/master/stacks.yaml)
+(default to https://raw.github.com/jboss-jdf/jdf-stack/master/stacks.yaml)
 and retrieve the list of available JDF Stacks.
 
 OBS: If this is the first time that you use this plugin, you should be online.
