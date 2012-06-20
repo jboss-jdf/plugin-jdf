@@ -9,23 +9,27 @@ import javax.inject.Inject;
 import org.jboss.forge.shell.completer.SimpleTokenCompleter;
 import org.jboss.jdf.plugins.stacks.Stack;
 
-public class JDFVersionCompleter extends SimpleTokenCompleter {
+public class JDFVersionCompleter extends SimpleTokenCompleter
+{
 
-	@Inject
-	private List<Stack> availableStacks;
+   @Inject
+   private List<Stack> availableStacks;
 
-	private Set<String> availableVersions;
+   private Set<String> availableVersions;
 
-	@Override
-	public Set<String> getCompletionTokens() {
-		if (availableVersions == null) {
-			availableVersions = new HashSet<String>();
-			for (Stack s : availableStacks) {
-				availableVersions.addAll(s.getVersions());
+   @Override
+   public Set<String> getCompletionTokens()
+   {
+      if (availableVersions == null)
+      {
+         availableVersions = new HashSet<String>();
+         for (Stack s : availableStacks)
+         {
+            availableVersions.addAll(s.getVersions());
 
-			}
-		}
-		return availableVersions;
-	}
+         }
+      }
+      return availableVersions;
+   }
 
 }
