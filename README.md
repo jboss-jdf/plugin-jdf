@@ -62,7 +62,7 @@ You can also type the complete command:
 jdf --stack jboss-javaee-6.0-with-errai --version 1.0.0.Final
 `
 
-**You can add multiples stacks to your project
+**You can add multiples stacks to your project**
 
 
 
@@ -71,15 +71,15 @@ Custom Repository
 
 If for any reason you want to change the default repository location, you must configure the jdf settings in Forge
 
-The jdf config file (jdfconfig.xml) is located inside forge config dir.
-
 1. Open the user configuration in ~/.forge/config.xml (located in your home directory.) 
 2. Add the 'jdf' tag and required information inside the 'configuration' root tag:  
 
         <configuration> 
+            ...
             <jdf> 
                 <stacksRepo>file:///home/benevides/stacks.yaml</stacksRepo> 
-            </jdf> 
+            </jdf>
+            ... 
         </configuration> 
 
 
