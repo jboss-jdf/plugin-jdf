@@ -57,7 +57,8 @@ and retrieve the list of available JDF Stacks.
 
 OBS: If this is the first time that you use this plugin, you should be online.
 
-You can also type the complete command:
+You can also type the complete command:  
+
 {code}
 jdf --stack jboss-javaee-6.0-with-errai --version 1.0.0.Final
 {code}
@@ -100,6 +101,7 @@ If for any reason you can not be online, the plugin will use a previously stored
 cache file as source of available stacks.
 
 If you want to force the offline use, you can set the OFFLINE property typing:  
+
 {code}
 set OFFLINE true
 {code}
@@ -110,7 +112,8 @@ Troubleshooting
 ---------------
 
 If you're experiencing some problems, you can turn on debug messages setting
-the VERBOSE property typing:  
+the VERBOSE property typing:
+  
 {code}
 set VERBOSE true
 {code}
