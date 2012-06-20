@@ -75,12 +75,12 @@ The jdf config file (jdfconfig.xml) is located inside forge config dir.
 
 1. Open the user configuration in ~/.forge/config.xml (located in your home directory.)
 2. Add the 'jdf' tag and required information inside the 'configuration' root tag:  
-> <configuration>
->   <jdf>
->   	<stacksRepo>file:///home/benevides/stacks.yaml</stacksRepo>
->   </jdf>
-> </configuration>
-`
+	<configuration>
+  		<jdf>
+			<stacksRepo>file:///home/benevides/stacks.yaml</stacksRepo>
+		</jdf>
+	</configuration>
+
 
 
 
