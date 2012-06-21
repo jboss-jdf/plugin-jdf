@@ -41,6 +41,8 @@ public class StacksUtil
 {
 
    public static final String DEFAULT_STACK_REPO = "https://raw.github.com/jboss-jdf/jdf-stack/master/stacks.yaml";
+   private static final String JDF_ELEMENT = "jdf";
+   private static final String STACKSREPO_ELEMENT = "stacksRepo";
 
    @Inject
    private Shell shell;
@@ -192,17 +194,16 @@ public class StacksUtil
 
    public String getStacksRepo()
    {
-      String repo = DEFAULT_STACK_REPO;
-      Configuration jdfConfig = configuration.getScopedConfiguration(ConfigurationScope.USER).subset("jdf");
-      if (jdfConfig != null && !jdfConfig.isEmpty())
+      Configuration userConfig = configuration.getScopedConfiguration(ConfigurationScope.USER);
+      Configuration jdfConfig = userConfig.subset(JDF_ELEMENT);
+      String stacksRepo = jdfConfig.getString(STACKSREPO_ELEMENT);
+      if (stacksRepo == null)
       {
-         String stacksRepoInConfig = jdfConfig.getString("stacksRepo");
-         if (stacksRepoInConfig != null)
-         {
-            repo = stacksRepoInConfig;
-         }
+         userConfig.setProperty(JDF_ELEMENT + "." + STACKSREPO_ELEMENT, DEFAULT_STACK_REPO);
+         return DEFAULT_STACK_REPO;
+      }else{
+         return jdfConfig.getString("stacksRepo");
       }
-      return repo;
    }
 
    @SuppressWarnings("unchecked")
