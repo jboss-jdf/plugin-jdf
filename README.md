@@ -61,7 +61,7 @@ You can also type the complete command:
 `
 jdf --stack jboss-javaee-6.0-with-errai --version 1.0.0.Final
 `
-
+** If there is more than one JDF Stack Version, the one that is signed with '*' is the recommended version and it will appear first".***
 **You can add multiples stacks to your project**
 
 

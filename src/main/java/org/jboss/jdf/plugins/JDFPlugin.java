@@ -26,6 +26,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 import org.jboss.forge.shell.ShellColor;
+import org.jboss.forge.shell.ShellPrompt;
 import org.jboss.forge.shell.plugins.Alias;
 import org.jboss.forge.shell.plugins.DefaultCommand;
 import org.jboss.forge.shell.plugins.Option;
@@ -54,6 +55,9 @@ public class JDFPlugin implements Plugin
    @Inject
    private JDFBOMProvider bomProvider;
 
+   @Inject
+   private ShellPrompt shellPrompt;
+
    @DefaultCommand(help = "Install a JDF JBoss Stack")
    public void installStack(
             @Option(name = OPTION_STACK, required = true, completer = AvailableStacksCompleter.class, description = "Stack Id") String stack,
@@ -63,15 +67,8 @@ public class JDFPlugin implements Plugin
    {
       Stack selectedStack = getSelectedStack(stack);
       // validate input
-      if (selectedStack == null)
+      if (isInvalidInput(selectedStack, stack, version, out))
       {
-         out.println(ShellColor.RED, "There is no stack [" + stack + "]. Try one of those: " + availableStacks);
-         return;
-      }
-      if (!selectedStack.getVersions().contains(version))
-      {
-         out.println(ShellColor.RED, "There is no version [" + version + "] for this stack [" + selectedStack
-                  + "]. Try one of those: " + selectedStack.getVersions());
          return;
       }
 
@@ -87,9 +84,35 @@ public class JDFPlugin implements Plugin
       }
       else
       {
+         if (!version.endsWith("*"))
+         {
+            boolean installNotRecommended = shellPrompt.promptBoolean(
+                     "You didn't choose the recommended version. Do you want continue the instalation?", false);
+            if (!installNotRecommended)
+            {
+               return;
+            }
+         }
          bomProvider.installBom(selectedStack.getArtifact(), version);
          out.println("Stack " + stack + " installed!");
       }
+   }
+
+   private boolean isInvalidInput(Stack selectedStack, String stack, String version, PipeOut out)
+   {
+      if (selectedStack == null)
+      {
+         out.println(ShellColor.RED, "There is no stack [" + stack + "]. Try one of those: " + availableStacks);
+         return true;
+      }
+      if (!selectedStack.getVersions().contains(version))
+      {
+         out.println(ShellColor.RED, "There is no version [" + version + "] for this stack [" + selectedStack
+                  + "]. Try one of those: " + selectedStack.getVersions());
+         return true;
+      }
+      return false;
+
    }
 
    private Stack getSelectedStack(String informedStack)
