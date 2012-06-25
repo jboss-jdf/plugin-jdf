@@ -34,7 +34,7 @@ import org.jboss.forge.shell.plugins.Plugin;
 import org.jboss.forge.shell.plugins.RequiresProject;
 import org.jboss.jdf.plugins.providers.JDFBOMProvider;
 import org.jboss.jdf.plugins.shell.AvailableStacksCompleter;
-import org.jboss.jdf.plugins.shell.JDFVersionCompleter;
+import org.jboss.jdf.plugins.shell.StackVersionCompleter;
 import org.jboss.jdf.plugins.stacks.Stack;
 
 /**
@@ -46,6 +46,7 @@ import org.jboss.jdf.plugins.stacks.Stack;
 @RequiresProject
 public class JDFPlugin implements Plugin
 {
+   public static final String OPTION_STACK = "stack";
 
    @Inject
    private List<Stack> availableStacks;
@@ -55,8 +56,9 @@ public class JDFPlugin implements Plugin
 
    @DefaultCommand(help = "Install a JDF JBoss Stack")
    public void installStack(
-            @Option(name = "stack", required = true, completer = AvailableStacksCompleter.class) String stack,
-            @Option(name = "version", required = true, completer = JDFVersionCompleter.class) String version,
+            @Option(name = OPTION_STACK, required = true, completer = AvailableStacksCompleter.class, description = "Stack Id") String stack,
+            @Option(name = "version", required = true, completer = StackVersionCompleter.class,
+                     description = "Stack Version - '*' Recommended JDF Stack Version") String version,
             PipeOut out)
    {
       Stack selectedStack = getSelectedStack(stack);
@@ -75,7 +77,13 @@ public class JDFPlugin implements Plugin
 
       if (bomProvider.isDependencyManagementInstalled(selectedStack.getArtifact()))
       {
-         out.println("Stack " + stack + " already installed");
+         String installedStackVersion = bomProvider.getInstalledVersionStack(selectedStack.getArtifact());
+         out.print("Stack " + stack + " already installed");
+         if (!installedStackVersion.equals(version))
+         {
+            out.print(" with a diferent version: " + installedStackVersion);
+         }
+         out.println();
       }
       else
       {

@@ -20,18 +20,26 @@ public class JDFBOMProvider
     * planned to be used in a update feature in future releases
     * 
     */
-   public boolean isDependencyManagementInstalled(String artfact)
+   public boolean isDependencyManagementInstalled(String artifact)
    {
       DependencyFacet dependencyFacet = project.getFacet(DependencyFacet.class);
-      Dependency dependency = DependencyBuilder.create(GROUPID + ":" + artfact);
-      return dependencyFacet.hasDirectManagedDependency(dependency);
+      Dependency dependency = DependencyBuilder.create(GROUPID + ":" + artifact);
+      return dependencyFacet.hasDirectManagedDependency(dependency) || dependencyFacet.hasEffectiveDependency(dependency);
    }
 
-   public void installBom(String artfact, String version)
+   public void installBom(String artifact, String version)
    {
+      String parsedVersion = version.replaceAll("[*]", ""); //Removes the * (recommend version) tag
       DependencyFacet dependencyFacet = project.getFacet(DependencyFacet.class);
-      Dependency bom = DependencyBuilder.create(GROUPID + ":" + artfact + ":" + version + ":import:pom");
+      Dependency bom = DependencyBuilder.create(GROUPID + ":" + artifact + ":" + parsedVersion + ":import:pom");
       dependencyFacet.addManagedDependency(bom);
+   }
+   
+   public String getInstalledVersionStack(String artifact){
+      DependencyFacet dependencyFacet = project.getFacet(DependencyFacet.class);
+      Dependency dependency = DependencyBuilder.create(GROUPID + ":" + artifact);
+      Dependency effeDependency = dependencyFacet.getManagedDependency(dependency);
+      return effeDependency.getVersion();
    }
 
 }
