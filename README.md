@@ -49,7 +49,7 @@ Running the plugin
 -------------------
 
 In Forge console type:
-`jdf --stack [TAB]`
+`jdf use-stack --stack [TAB]`
 
 this should connect to the JDF Stacks repository 
 (default to https://raw.github.com/jboss-jdf/jdf-stack/master/stacks.yaml)
@@ -57,11 +57,14 @@ and retrieve the list of available JDF Stacks.
 
 OBS: If this is the first time that you use this plugin, you should be online.
 
-You can also type the complete command: 
+You can type the use-stack commmand:
+
+jdf use-stack --stack jboss-javaee-6.0-with-errai
+
+Or you can also type the complete command: 
 `
-jdf --stack jboss-javaee-6.0-with-errai --version 1.0.0.Final
+jdf use-stack --stack jboss-javaee-6.0-with-errai --version 1.0.0.Final
 `
-** If there is more than one JDF Stack Version, the one that is signed with '*' is the recommended version and it will appear first".***
 **You can add multiples stacks to your project**
 
 
