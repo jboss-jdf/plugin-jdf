@@ -49,6 +49,7 @@ public class JdfPluginTest extends AbstractShellTest
    @Inject
    private StacksUtil stacksUtil;
 
+
    @Before
    public void setup() throws Exception
    {
@@ -65,8 +66,9 @@ public class JdfPluginTest extends AbstractShellTest
    public void testShellexecute() throws Exception
    {
       queueInputLines("y");
-      getShell().execute("jdf --stack " + STACK_ARTIFACT + " --version " + STACK_VERSION);
+      getShell().execute("jdf use-stack --stack " + STACK_ARTIFACT + " --version " + STACK_VERSION);
    }
+
 
    @Test
    public void testAvailableStacks() throws Exception
@@ -82,6 +84,26 @@ public class JdfPluginTest extends AbstractShellTest
       bomProvider.installBom(STACK_ARTIFACT, STACK_VERSION);
       Assert.assertTrue("Stack should be installed", bomProvider.isDependencyManagementInstalled(STACK_ARTIFACT));
    }
+   
+   @Test
+   public void testBOMRemoval() throws Exception
+   {
+      Assert.assertFalse(bomProvider.isDependencyManagementInstalled(STACK_ARTIFACT));
+      testBOMInstallation();
+      bomProvider.installBom(STACK_ARTIFACT, STACK_VERSION);
+      Assert.assertTrue("Stack should not be installed", bomProvider.isDependencyManagementInstalled(STACK_ARTIFACT));
+   }
+
+
+   @Test
+   public void testGetArtifactVersion() throws Exception
+   {
+      Assert.assertFalse(bomProvider.isDependencyManagementInstalled(STACK_ARTIFACT));
+      testBOMInstallation();
+      bomProvider.installBom(STACK_ARTIFACT, STACK_VERSION);
+      Assert.assertEquals("Stack should be installed with the same version", STACK_VERSION, bomProvider.getInstalledVersionStack(STACK_ARTIFACT));
+   }
+
 
    @Test
    public void testStackRepoFile() throws Exception
