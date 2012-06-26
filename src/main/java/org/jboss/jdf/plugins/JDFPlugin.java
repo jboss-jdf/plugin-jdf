@@ -25,10 +25,10 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import org.jboss.forge.shell.ShellColor;
+import org.jboss.forge.shell.ShellMessages;
 import org.jboss.forge.shell.ShellPrompt;
 import org.jboss.forge.shell.plugins.Alias;
-import org.jboss.forge.shell.plugins.DefaultCommand;
+import org.jboss.forge.shell.plugins.Command;
 import org.jboss.forge.shell.plugins.Option;
 import org.jboss.forge.shell.plugins.PipeOut;
 import org.jboss.forge.shell.plugins.Plugin;
@@ -58,57 +58,91 @@ public class JDFPlugin implements Plugin
    @Inject
    private ShellPrompt shellPrompt;
 
-   @DefaultCommand(help = "Install a JDF JBoss Stack")
+   @Command(value = "use-stack", help = "Enable JDF JBoss Stack in to a Project")
    public void installStack(
             @Option(name = OPTION_STACK, required = true, completer = AvailableStacksCompleter.class, description = "Stack Id") String stack,
-            @Option(name = "version", required = true, completer = StackVersionCompleter.class,
-                     description = "Stack Version - '*' Recommended JDF Stack Version") String version,
+            @Option(name = "version", required = false, completer = StackVersionCompleter.class,
+                     description = "Recommended JDF Stack Version") String version,
             PipeOut out)
    {
       Stack selectedStack = getSelectedStack(stack);
+      String chosenVersion = chooseVersion(selectedStack, version);
       // validate input
-      if (isInvalidInput(selectedStack, stack, version, out))
+      if (isInvalidInput(selectedStack, stack, chosenVersion, out))
       {
          return;
       }
 
       if (bomProvider.isDependencyManagementInstalled(selectedStack.getArtifact()))
       {
-         String installedStackVersion = bomProvider.getInstalledVersionStack(selectedStack.getArtifact());
-         out.print("Stack " + stack + " already installed");
-         if (!installedStackVersion.equals(version))
-         {
-            out.print(" with a diferent version: " + installedStackVersion);
-         }
-         out.println();
+         handleStackAlreadyInstaled(selectedStack, chosenVersion, out);
       }
       else
       {
-         if (!version.endsWith("*"))
-         {
-            boolean installNotRecommended = shellPrompt.promptBoolean(
-                     "You didn't choose the recommended version. Do you want continue the instalation?", false);
-            if (!installNotRecommended)
-            {
-               return;
-            }
-         }
-         bomProvider.installBom(selectedStack.getArtifact(), version);
-         out.println("Stack " + stack + " installed!");
+         handleStackInstalation(selectedStack, chosenVersion, out);
       }
+   }
+
+   private String chooseVersion(Stack selectedStack, String version)
+   {
+      if (selectedStack != null && version == null)
+      {
+         return shellPrompt.promptChoiceTyped("Whice version of stack " + selectedStack,
+                  selectedStack.getAvailableVersions(), selectedStack.getRecommendedVersion());
+      }
+      return version;
+   }
+
+   private void handleStackInstalation(Stack selectedStack, String version, PipeOut out)
+   {
+      if (!selectedStack.getRecommendedVersion().equals(version))
+      {
+         boolean installNotRecommended = shellPrompt.promptBoolean(
+                  "You didn't choose the recommended version. Do you want continue the installation?", false);
+         if (!installNotRecommended)
+         {
+            return;
+         }
+      }
+      addStack(selectedStack, version, out);
+   }
+
+   private void addStack(Stack selectedStack, String version, PipeOut out)
+   {
+      bomProvider.installBom(selectedStack.getArtifact(), version);
+      ShellMessages.success(out, "Stack " + selectedStack.getName() + " version " + version + " installed!");
+   }
+
+   private void handleStackAlreadyInstaled(Stack selectedStack, String version, PipeOut out)
+   {
+      String previousStackVersion = bomProvider.getInstalledVersionStack(selectedStack.getArtifact());
+      ShellMessages.info(out, "Stack " + selectedStack.getName() + " already installed");
+      // If <> installed stack version
+      if (!previousStackVersion.equals(version))
+      {
+         ShellMessages.warn(out, " Another version of this stack is installed: " + previousStackVersion);
+         boolean shouldUpdate = shellPrompt
+                  .promptBoolean("Do you want to update this Stack version to: " + version + " ?", false);
+         if (shouldUpdate)
+         {
+            bomProvider.removeBom(selectedStack.getArtifact(), previousStackVersion);
+            addStack(selectedStack, version, out);
+         }
+      }
+      out.println();
    }
 
    private boolean isInvalidInput(Stack selectedStack, String stack, String version, PipeOut out)
    {
       if (selectedStack == null)
       {
-         out.println(ShellColor.RED, "There is no stack [" + stack + "]. Try one of those: " + availableStacks);
+         ShellMessages.error(out, "There is no stack [" + stack + "]. Try one of those: " + availableStacks);
          return true;
       }
-      if (!selectedStack.getVersions().contains(version))
+      if (!selectedStack.getAvailableVersions().contains(version))
       {
-         out.println(ShellColor.RED, "There is no version [" + version + "] for this stack [" + selectedStack
-                  + "]. Try one of those: " + selectedStack.getVersions());
+         ShellMessages.error(out, "There is no version [" + version + "] for this stack [" + selectedStack
+                  + "]. Try one of those: " + selectedStack.getAvailableVersions());
          return true;
       }
       return false;

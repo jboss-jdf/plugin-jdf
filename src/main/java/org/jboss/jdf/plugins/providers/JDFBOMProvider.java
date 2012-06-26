@@ -45,9 +45,8 @@ public class JDFBOMProvider
 
    public void installBom(String artifact, String version)
    {
-      String parsedVersion = version.replaceAll("[*]", ""); //Removes the * (recommend version) tag
       DependencyFacet dependencyFacet = project.getFacet(DependencyFacet.class);
-      Dependency bom = DependencyBuilder.create(GROUPID + ":" + artifact + ":" + parsedVersion + ":import:pom");
+      Dependency bom = DependencyBuilder.create(GROUPID + ":" + artifact + ":" + version + ":import:pom");
       dependencyFacet.addManagedDependency(bom);
    }
    
@@ -56,6 +55,13 @@ public class JDFBOMProvider
       Dependency dependency = DependencyBuilder.create(GROUPID + ":" + artifact);
       Dependency effeDependency = dependencyFacet.getManagedDependency(dependency);
       return effeDependency.getVersion();
+   }
+
+   public void removeBom(String artifact, String version)
+   {
+     DependencyFacet dependencyFacet = project.getFacet(DependencyFacet.class);
+     Dependency dependency = DependencyBuilder.create(GROUPID + ":" + artifact + ":" + version + ":import:pom");
+     dependencyFacet.removeManagedDependency(dependency);
    }
 
 }

@@ -45,7 +45,7 @@ public class StackVersionCompleter extends SimpleTokenCompleter
       Stack stack = getSelectedStack(informedStack);
       if (stack != null)
       {
-         versions.addAll(stack.getVersions());
+         versions.add(stack.getRecommendedVersion());
          
       }
       return versions;

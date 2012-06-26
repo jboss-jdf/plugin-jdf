@@ -20,10 +20,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * This class represents the Stack 
+ * This class represents the Stack
  * 
  * @author <a href="mailto:benevides@redhat.com">Rafael Benevides</a>
- *
+ * 
  */
 public class Stack
 {
@@ -36,7 +36,9 @@ public class Stack
 
    private String artifact;
 
-   private List<String> versions = new ArrayList<String>();
+   private String recommendedVersion;
+
+   private List<String> availableVersions = new ArrayList<String>();
 
    public String getId()
    {
@@ -78,14 +80,24 @@ public class Stack
       this.artifact = artfact;
    }
 
-   public List<String> getVersions()
+   public String getRecommendedVersion()
    {
-      return versions;
+      return recommendedVersion;
    }
 
-   public void setVersions(List<String> versions)
+   public void setRecommendedVersion(String recommendedVersion)
    {
-      this.versions = versions;
+      this.recommendedVersion = recommendedVersion;
+   }
+
+   public List<String> getAvailableVersions()
+   {
+      return availableVersions;
+   }
+
+   public void setAvailableVersions(List<String> availableVersions)
+   {
+      this.availableVersions = availableVersions;
    }
 
    @Override

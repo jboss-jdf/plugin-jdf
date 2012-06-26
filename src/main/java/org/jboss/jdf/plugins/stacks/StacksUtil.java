@@ -41,7 +41,7 @@ import org.jboss.forge.env.Configuration;
 import org.jboss.forge.env.ConfigurationScope;
 import org.jboss.forge.resources.FileResource;
 import org.jboss.forge.shell.Shell;
-import org.jboss.forge.shell.ShellColor;
+import org.jboss.forge.shell.ShellMessages;
 import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
@@ -96,15 +96,15 @@ public class StacksUtil
                e.printStackTrace();
             }
             shell.println();
-            shell.println(ShellColor.YELLOW, "It was not possible to contact the repository at " + stacksRepo);
-            shell.println(ShellColor.YELLOW, "Falling back to cache!");
+            ShellMessages.warn(shell, "It was not possible to contact the repository at " + stacksRepo);
+            ShellMessages.warn(shell, "Falling back to cache!");
             repoStream = getCachedRepoStream(stacksRepo, false);
          }
       }
       // If the Repostream stills empty after falling back to cache
       if (repoStream == null)
       {
-         shell.println(ShellColor.RED, "The Cache is empty. Try going online to get the list of available JDF Stacks!");
+         ShellMessages.error(shell, "The Cache is empty. Try going online to get the list of available JDF Stacks!");
          return null;
       }
       List<Stack> stacks = populateStacksFromStream(repoStream);
@@ -133,7 +133,7 @@ public class StacksUtil
 
       Constructor constructor = new CustomClassLoaderConstructor(Stack.class, this.getClass().getClassLoader());
       TypeDescription stackDescription = new TypeDescription(Stack.class);
-      stackDescription.putListPropertyType("versions", String.class);
+      stackDescription.putListPropertyType("availableVersions", String.class);
       constructor.addTypeDescription(stackDescription);
       Yaml yaml = new Yaml(constructor);
 
@@ -145,6 +145,12 @@ public class StacksUtil
          }
 
          Stack stack = (Stack) o;
+         if (!stack.getAvailableVersions().contains(stack.getRecommendedVersion()))
+         {
+            throw new RuntimeException("Invalid repository information: The recommended version ["
+                     + stack.getRecommendedVersion() + " for stack [" + stack
+                     + "] is not one of the available versions");
+         }
          stacksList.add(stack);
       }
       return stacksList;
@@ -167,11 +173,11 @@ public class StacksUtil
             break;
 
          case 404:
-            shell.println("Failed! (Stacks file not found: " + stacksRepo + ")");
+            ShellMessages.error(shell, "Failed! (Stacks file not found: " + stacksRepo + ")");
             return null;
 
          default:
-            shell.println("Failed! (server returned status code: " + httpResponse.getStatusLine().getStatusCode());
+            ShellMessages.error(shell,"Failed! (server returned status code: " + httpResponse.getStatusLine().getStatusCode());
             return null;
          }
          return httpResponse.getEntity().getContent();
@@ -217,7 +223,9 @@ public class StacksUtil
       {
          userConfig.setProperty(JDF_ELEMENT + "." + STACKSREPO_ELEMENT, DEFAULT_STACK_REPO);
          return DEFAULT_STACK_REPO;
-      }else{
+      }
+      else
+      {
          return jdfConfig.getString("stacksRepo");
       }
    }
