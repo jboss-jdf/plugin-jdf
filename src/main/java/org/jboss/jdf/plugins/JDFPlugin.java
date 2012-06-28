@@ -25,6 +25,7 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import org.jboss.forge.shell.ShellColor;
 import org.jboss.forge.shell.ShellMessages;
 import org.jboss.forge.shell.ShellPrompt;
 import org.jboss.forge.shell.plugins.Alias;
@@ -83,6 +84,33 @@ public class JDFPlugin implements Plugin
       }
    }
 
+   @Command(value = "show-stacks", help = "List the available stacks")
+   public void listStacks(PipeOut out)
+   {
+      for (Stack stack : availableStacks)
+      {
+         out.println(" - " + out.renderColor(ShellColor.BOLD, stack.getId()) + " (" + stack.getName() + ")");
+         out.println("\tDescription: " + stack.getDescription());
+         out.println("\tArtifact: " + stack.getArtifact());
+         out.println("\tRecommended Version: " + out.renderColor(ShellColor.GREEN, stack.getRecommendedVersion()));
+         if (stack.getAvailableVersions().size() > 0)
+         {
+            out.println("\tAvailable Versions:");
+         }
+         for (String availableVersion: stack.getAvailableVersions()){
+            out.println(ShellColor.BLUE, "\t\t - " + availableVersion);
+         }
+         out.println();
+      }
+   }
+
+   /**
+    * Permits the user choose on of the available versions of the informed stack.
+    * 
+    * @param selectedStack
+    * @param version if null, user must chose one version of the selectedStack
+    * @return the chosen version
+    */
    private String chooseVersion(Stack selectedStack, String version)
    {
       if (selectedStack != null && version == null)
@@ -93,6 +121,13 @@ public class JDFPlugin implements Plugin
       return version;
    }
 
+   /**
+    * Interacts with the user in a Stack Installation
+    * 
+    * @param selectedStack
+    * @param version
+    * @param out
+    */
    private void handleStackInstalation(Stack selectedStack, String version, PipeOut out)
    {
       if (!selectedStack.getRecommendedVersion().equals(version))
@@ -107,12 +142,27 @@ public class JDFPlugin implements Plugin
       addStack(selectedStack, version, out);
    }
 
+   /**
+    * Add a Stack (almost) without user interaction
+    * 
+    * @param selectedStack
+    * @param version
+    * @param out
+    */
    private void addStack(Stack selectedStack, String version, PipeOut out)
    {
       bomProvider.installBom(selectedStack.getArtifact(), version);
       ShellMessages.success(out, "Stack " + selectedStack.getName() + " version " + version + " installed!");
    }
 
+   /**
+    * Interacts with the user with a Stack is already installed. If the installed Stack is in a different version, the
+    * JDF plugin prompts the user if an update is necessary.
+    * 
+    * @param selectedStack
+    * @param version
+    * @param out
+    */
    private void handleStackAlreadyInstaled(Stack selectedStack, String version, PipeOut out)
    {
       String previousStackVersion = bomProvider.getInstalledVersionStack(selectedStack.getArtifact());
@@ -126,12 +176,27 @@ public class JDFPlugin implements Plugin
          if (shouldUpdate)
          {
             bomProvider.removeBom(selectedStack.getArtifact(), previousStackVersion);
+            // For an atomic update, adding stack has no user interaction if the new version is not one of the
+            // recommended. So addStack() is called instead of handleStackInstalation()
             addStack(selectedStack, version, out);
          }
       }
       out.println();
    }
 
+   /**
+    * Validate the user input values.
+    * 
+    * The selected Stack should be one of the available stacks.
+    * 
+    * The version must be one of the available versions of the stack.
+    * 
+    * @param selectedStack
+    * @param stack
+    * @param version
+    * @param out
+    * @return true if has any invalid input
+    */
    private boolean isInvalidInput(Stack selectedStack, String stack, String version, PipeOut out)
    {
       if (selectedStack == null)
@@ -149,6 +214,12 @@ public class JDFPlugin implements Plugin
 
    }
 
+   /**
+    * Finds the stack object based on its id
+    * 
+    * @param informedStack the stack id
+    * @return stack
+    */
    private Stack getSelectedStack(String informedStack)
    {
       for (Stack stack : availableStacks)
