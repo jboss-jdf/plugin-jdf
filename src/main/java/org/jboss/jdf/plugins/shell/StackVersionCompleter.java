@@ -27,7 +27,6 @@ import javax.inject.Inject;
 import org.jboss.forge.shell.completer.CommandCompleterState;
 import org.jboss.forge.shell.completer.SimpleTokenCompleter;
 import org.jboss.jdf.plugins.stacks.Stack;
-import org.jboss.jdf.plugins.stacks.StacksComparator;
 
 public class StackVersionCompleter extends SimpleTokenCompleter
 {
@@ -40,7 +39,7 @@ public class StackVersionCompleter extends SimpleTokenCompleter
    @Override
    public Set<String> getCompletionTokens()
    {
-      Set<String> versions = new TreeSet<String>(new StacksComparator());
+      Set<String> versions = new TreeSet<String>();
       String informedStack = getInformedStack();
       Stack stack = getSelectedStack(informedStack);
       if (stack != null)
