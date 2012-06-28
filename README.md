@@ -48,23 +48,37 @@ After in Forge prompt type
 Running the plugin
 -------------------
 
+OBS: If this is the first time that you use this plugin, you must be online.
+
 In Forge console type:
 `jdf use-stack --stack [TAB]`
 
 this should connect to the JDF Stacks repository 
 (default to https://raw.github.com/jboss-jdf/jdf-stack/master/stacks.yaml)
-and retrieve the list of available JDF Stacks.
+and retrieve the list of available JDF Stacks. 
 
-OBS: If this is the first time that you use this plugin, you should be online.
+The connection to the repository is made once a day. You can force the refresh of 
+the available stacks running the refresh-stacks command:
+`
+jdf refresh-stacks
+`
+
+You can view the available stacks information running:
+`
+jdf show-stacks
+`
 
 You can type the use-stack commmand:
-
+`
 jdf use-stack --stack jboss-javaee-6.0-with-errai
+`
 
 Or you can also type the complete command: 
 `
 jdf use-stack --stack jboss-javaee-6.0-with-errai --version 1.0.0.Final
 `
+
+
 **You can add multiples stacks to your project**
 
 
@@ -85,7 +99,7 @@ If for any reason you want to change the default repository location, you must c
             ... 
         </configuration> 
 
-
+**You must run jdf refresh-stacks to force the update of the repository information**
 
 Proxy Configuration
 -------------------

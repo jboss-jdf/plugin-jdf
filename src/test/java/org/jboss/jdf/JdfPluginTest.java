@@ -63,12 +63,26 @@ public class JdfPluginTest extends AbstractShellTest
    }
 
    @Test
-   public void testShellexecute() throws Exception
+   public void testShellexecuteUseStack() throws Exception
    {
       queueInputLines("y");
       getShell().execute("jdf use-stack --stack " + STACK_ARTIFACT + " --version " + STACK_VERSION);
    }
 
+   @Test
+   public void testShellexecuteShowStacks() throws Exception
+   {
+      queueInputLines("y");
+      getShell().execute("jdf show-stacks");
+   }
+
+   @Test
+   public void testShellexecuteRefreshStacks() throws Exception
+   {
+      queueInputLines("y");
+      getShell().execute("jdf refresh-stacks");
+      Assert.assertNotNull("Stacks should be available after a refresh", stacksUtil.retrieveAvailableStacks());
+   }
 
    @Test
    public void testAvailableStacks() throws Exception

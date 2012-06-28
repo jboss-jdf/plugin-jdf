@@ -38,6 +38,7 @@ import org.jboss.jdf.plugins.providers.JDFBOMProvider;
 import org.jboss.jdf.plugins.shell.AvailableStacksCompleter;
 import org.jboss.jdf.plugins.shell.StackVersionCompleter;
 import org.jboss.jdf.plugins.stacks.Stack;
+import org.jboss.jdf.plugins.stacks.StacksUtil;
 
 /**
  * The JDF Plugin itself
@@ -58,6 +59,9 @@ public class JDFPlugin implements Plugin
 
    @Inject
    private ShellPrompt shellPrompt;
+   
+   @Inject
+   private StacksUtil stacksUtil;
 
    @Command(value = "use-stack", help = "Enable JDF JBoss Stack in to a Project")
    public void installStack(
@@ -97,11 +101,24 @@ public class JDFPlugin implements Plugin
          {
             out.println("\tAvailable Versions:");
          }
-         for (String availableVersion: stack.getAvailableVersions()){
+         for (String availableVersion : stack.getAvailableVersions())
+         {
             out.println(ShellColor.BLUE, "\t\t - " + availableVersion);
          }
          out.println();
       }
+   }
+   
+   @Command(value = "refresh-stacks", help = "Force the update of the Stacks. It is updated automatically once a day")
+   public void refreshStacks(PipeOut out)
+   {
+      //Destroying the cache, forces it to be updated
+      stacksUtil.eraseRepositoryCache();
+      //Force the update
+     List<Stack> stacks = stacksUtil.retrieveAvailableStacks();
+     if (stacks != null){
+        ShellMessages.success(out, "Stacks updated from the following repository: " + stacksUtil.getStacksRepo());
+     }
    }
 
    /**

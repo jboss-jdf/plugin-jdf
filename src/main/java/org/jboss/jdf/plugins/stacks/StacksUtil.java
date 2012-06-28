@@ -191,12 +191,12 @@ public class StacksUtil
 
    private InputStream getCachedRepoStream(final String repo, final boolean online)
    {
-      FileResource<?> cachedRepo = getCacheFileResource(repo);
+      FileResource<?> cachedRepo = getCacheFileResource();
       if (cachedRepo.exists())
       {
          long lastModified = cachedRepo.getUnderlyingResourceObject().lastModified();
-         // if online, consider the cache valid until it expires after 1 minute
-         if (!online || System.currentTimeMillis() - lastModified <= (1000 * 10))
+         // if online, consider the cache valid until it expires after 24 hours
+         if (!online || System.currentTimeMillis() - lastModified <= (1000 * 60 * 60 * 24))
          {
             return cachedRepo.getResourceInputStream();
          }
@@ -206,7 +206,7 @@ public class StacksUtil
 
    private void setCachedRepoStream(final String repo, final InputStream stream)
    {
-      FileResource<?> cachedRepo = getCacheFileResource(repo);
+      FileResource<?> cachedRepo = getCacheFileResource();
       if (!cachedRepo.exists())
       {
          cachedRepo.createNewFile();
@@ -231,7 +231,7 @@ public class StacksUtil
    }
 
    @SuppressWarnings("unchecked")
-   private FileResource<?> getCacheFileResource(final String repo)
+   private FileResource<?> getCacheFileResource()
    {
       return shell.getEnvironment().getConfigDirectory().getChildOfType(FileResource.class, "stacks.yaml");
    }
@@ -254,6 +254,13 @@ public class StacksUtil
             client.getCredentialsProvider().setCredentials(authScope, credentials);
          }
       }
+   }
+
+   public void eraseRepositoryCache()
+   {
+      FileResource<?> repositoryCache = getCacheFileResource();
+      repositoryCache.delete();
+      
    }
 
 }
