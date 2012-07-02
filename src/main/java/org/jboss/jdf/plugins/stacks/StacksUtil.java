@@ -56,9 +56,13 @@ import org.yaml.snakeyaml.constructor.CustomClassLoaderConstructor;
 public class StacksUtil
 {
 
-   public static final String DEFAULT_STACK_REPO = "https://raw.github.com/jboss-jdf/jdf-stack/master/stacks.yaml";
+   private static final String BRANCH = "$BRANCH$";
    private static final String JDF_ELEMENT = "jdf";
    private static final String STACKSREPO_ELEMENT = "stacksRepo";
+   private static final String STACK_BRANCH = "Beta1";
+// private static final String STACK_BRANCH = "master";
+   public static final String DEFAULT_STACK_REPO = "https://raw.github.com/jboss-jdf/jdf-stack/" + BRANCH
+            + "/stacks.yaml";
 
    @Inject
    private Shell shell;
@@ -68,6 +72,7 @@ public class StacksUtil
 
    @Inject
    private ForgeEnvironment environment;
+
 
    /**
     * This method verifies all available Stacks in repository
@@ -177,7 +182,8 @@ public class StacksUtil
             return null;
 
          default:
-            ShellMessages.error(shell,"Failed! (server returned status code: " + httpResponse.getStatusLine().getStatusCode());
+            ShellMessages.error(shell, "Failed! (server returned status code: "
+                     + httpResponse.getStatusLine().getStatusCode());
             return null;
          }
          return httpResponse.getEntity().getContent();
@@ -217,17 +223,43 @@ public class StacksUtil
    public String getStacksRepo()
    {
       Configuration userConfig = configuration.getScopedConfiguration(ConfigurationScope.USER);
+      verifyIfNeedConfigurationUpdate(userConfig);
       Configuration jdfConfig = userConfig.subset(JDF_ELEMENT);
       String stacksRepo = jdfConfig.getString(STACKSREPO_ELEMENT);
       if (stacksRepo == null)
       {
-         userConfig.setProperty(JDF_ELEMENT + "." + STACKSREPO_ELEMENT, DEFAULT_STACK_REPO);
-         return DEFAULT_STACK_REPO;
+         String jdfStackRepo = DEFAULT_STACK_REPO.replaceAll(BRANCH, STACK_BRANCH);
+         userConfig.setProperty(JDF_ELEMENT + "." + STACKSREPO_ELEMENT, jdfStackRepo);
+         return jdfStackRepo;
       }
       else
       {
-         return jdfConfig.getString("stacksRepo");
+         return jdfConfig.getString(STACKSREPO_ELEMENT);
       }
+   }
+
+   /**
+    * Verifies if the config file need to be updated. The update procedure will proceed if the version in config file
+    * points to a official repository and it is changed in this release
+    * 
+    * @param userConfig
+    */
+   private void verifyIfNeedConfigurationUpdate(Configuration userConfig)
+   {
+      Configuration jdfConfig = userConfig.subset(JDF_ELEMENT);
+      String defaultRepoPrefix = DEFAULT_STACK_REPO.substring(0, DEFAULT_STACK_REPO.lastIndexOf(BRANCH));
+      String configRepo = jdfConfig.getString(STACKSREPO_ELEMENT);
+      String releaseRepo = DEFAULT_STACK_REPO.replace(BRANCH, STACK_BRANCH);
+      // If config uses the official repo and it is changed in this release
+      if (configRepo.startsWith(defaultRepoPrefix) && !configRepo.equals(releaseRepo))
+      {
+         //silently update the configuration
+         userConfig.setProperty(JDF_ELEMENT + "." + STACKSREPO_ELEMENT, releaseRepo);
+         //silently reset the cache 
+         eraseRepositoryCache();
+         retrieveAvailableStacks();
+      }
+
    }
 
    @SuppressWarnings("unchecked")
