@@ -41,7 +41,7 @@ Run forge console by typing
 `forge.bat` -- Windows
 
 After in Forge prompt type  
-`$ forge git-plugin https://github.com/jboss-jdf/plugin-jdf.git `
+`$ forge install-plugin jdf `
 
 
 
