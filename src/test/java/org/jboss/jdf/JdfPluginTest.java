@@ -49,7 +49,6 @@ public class JdfPluginTest extends AbstractShellTest
    @Inject
    private StacksUtil stacksUtil;
 
-
    @Before
    public void setup() throws Exception
    {
@@ -98,7 +97,7 @@ public class JdfPluginTest extends AbstractShellTest
       bomProvider.installBom(STACK_ARTIFACT, STACK_VERSION);
       Assert.assertTrue("Stack should be installed", bomProvider.isDependencyManagementInstalled(STACK_ARTIFACT));
    }
-   
+
    @Test
    public void testBOMRemoval() throws Exception
    {
@@ -108,22 +107,20 @@ public class JdfPluginTest extends AbstractShellTest
       Assert.assertTrue("Stack should not be installed", bomProvider.isDependencyManagementInstalled(STACK_ARTIFACT));
    }
 
-
    @Test
    public void testGetArtifactVersion() throws Exception
    {
       Assert.assertFalse(bomProvider.isDependencyManagementInstalled(STACK_ARTIFACT));
       testBOMInstallation();
       bomProvider.installBom(STACK_ARTIFACT, STACK_VERSION);
-      Assert.assertEquals("Stack should be installed with the same version", STACK_VERSION, bomProvider.getInstalledVersionStack(STACK_ARTIFACT));
+      Assert.assertEquals("Stack should be installed with the same version", STACK_VERSION,
+               bomProvider.getInstalledVersionStack(STACK_ARTIFACT));
    }
-
 
    @Test
    public void testStackRepoFile() throws Exception
    {
       String repo = stacksUtil.getStacksRepo();
-      Assert.assertEquals(StacksUtil.DEFAULT_STACK_REPO, repo);
+      Assert.assertEquals("https://raw.github.com/jboss-jdf/jdf-stack/Beta1/stacks.yaml", repo);
    }
-
 }

@@ -61,7 +61,7 @@ public class StacksUtil
    private static final String STACKSREPO_ELEMENT = "stacksRepo";
    private static final String STACK_BRANCH = "Beta1";
 // private static final String STACK_BRANCH = "master";
-   public static final String DEFAULT_STACK_REPO = "https://raw.github.com/jboss-jdf/jdf-stack/" + BRANCH
+   private static final String DEFAULT_STACK_REPO = "https://raw.github.com/jboss-jdf/jdf-stack/" + BRANCH
             + "/stacks.yaml";
 
    @Inject
