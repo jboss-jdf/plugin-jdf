@@ -26,8 +26,6 @@ import org.jboss.forge.project.facets.DependencyFacet;
 public class JDFBOMProvider
 {
 
-   private static final String GROUPID = "org.jboss.bom";
-
    @Inject
    private Project project;
 
@@ -36,32 +34,34 @@ public class JDFBOMProvider
     * planned to be used in a update feature in future releases
     * 
     */
-   public boolean isDependencyManagementInstalled(String artifact)
+   public boolean isDependencyManagementInstalled(String groupId, String artifactId)
    {
       DependencyFacet dependencyFacet = project.getFacet(DependencyFacet.class);
-      Dependency dependency = DependencyBuilder.create(GROUPID + ":" + artifact);
-      return dependencyFacet.hasDirectManagedDependency(dependency) || dependencyFacet.hasEffectiveDependency(dependency);
+      Dependency dependency = DependencyBuilder.create(groupId + ":" + artifactId);
+      return dependencyFacet.hasDirectManagedDependency(dependency)
+               || dependencyFacet.hasEffectiveDependency(dependency);
    }
 
-   public void installBom(String artifact, String version)
+   public void installBom(String groupId, String artifactId, String version)
    {
       DependencyFacet dependencyFacet = project.getFacet(DependencyFacet.class);
-      Dependency bom = DependencyBuilder.create(GROUPID + ":" + artifact + ":" + version + ":import:pom");
+      Dependency bom = DependencyBuilder.create(groupId + ":" + artifactId + ":" + version + ":import:pom");
       dependencyFacet.addManagedDependency(bom);
    }
-   
-   public String getInstalledVersionStack(String artifact){
+
+   public String getInstalledVersionStack(String groupId, String artifactId)
+   {
       DependencyFacet dependencyFacet = project.getFacet(DependencyFacet.class);
-      Dependency dependency = DependencyBuilder.create(GROUPID + ":" + artifact);
+      Dependency dependency = DependencyBuilder.create(groupId + ":" + artifactId);
       Dependency effeDependency = dependencyFacet.getManagedDependency(dependency);
       return effeDependency.getVersion();
    }
 
-   public void removeBom(String artifact, String version)
+   public void removeBom(String groupId, String artifactId, String version)
    {
-     DependencyFacet dependencyFacet = project.getFacet(DependencyFacet.class);
-     Dependency dependency = DependencyBuilder.create(GROUPID + ":" + artifact + ":" + version + ":import:pom");
-     dependencyFacet.removeManagedDependency(dependency);
+      DependencyFacet dependencyFacet = project.getFacet(DependencyFacet.class);
+      Dependency dependency = DependencyBuilder.create(groupId + ":" + artifactId + ":" + version + ":import:pom");
+      dependencyFacet.removeManagedDependency(dependency);
    }
 
 }

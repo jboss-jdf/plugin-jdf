@@ -37,7 +37,7 @@ import org.jboss.forge.shell.plugins.RequiresProject;
 import org.jboss.jdf.plugins.providers.JDFBOMProvider;
 import org.jboss.jdf.plugins.shell.AvailableStacksCompleter;
 import org.jboss.jdf.plugins.shell.StackVersionCompleter;
-import org.jboss.jdf.plugins.stacks.Stack;
+import org.jboss.jdf.plugins.stacks.Parser.Bom;
 import org.jboss.jdf.plugins.stacks.StacksUtil;
 
 /**
@@ -52,7 +52,7 @@ public class JDFPlugin implements Plugin
    public static final String OPTION_STACK = "stack";
 
    @Inject
-   private List<Stack> availableStacks;
+   private List<Bom> availableBoms;
 
    @Inject
    private JDFBOMProvider bomProvider;
@@ -70,7 +70,7 @@ public class JDFPlugin implements Plugin
                      description = "Recommended JDF Stack Version") String version,
             PipeOut out)
    {
-      Stack selectedStack = getSelectedStack(stack);
+      Bom selectedStack = getSelectedStack(stack);
       String chosenVersion = chooseVersion(selectedStack, version);
       // validate input
       if (isInvalidInput(selectedStack, stack, chosenVersion, out))
@@ -78,7 +78,7 @@ public class JDFPlugin implements Plugin
          return;
       }
 
-      if (bomProvider.isDependencyManagementInstalled(selectedStack.getArtifact()))
+      if (bomProvider.isDependencyManagementInstalled(selectedStack.getGroupId(), selectedStack.getArtifactId()))
       {
          handleStackAlreadyInstaled(selectedStack, chosenVersion, out);
       }
@@ -91,11 +91,12 @@ public class JDFPlugin implements Plugin
    @Command(value = "show-stacks", help = "List the available stacks")
    public void listStacks(PipeOut out)
    {
-      for (Stack stack : availableStacks)
+      for (Bom stack : availableBoms)
       {
-         out.println(" - " + out.renderColor(ShellColor.BOLD, stack.getId()) + " (" + stack.getName() + ")");
+         out.println(" - " + out.renderColor(ShellColor.BOLD, stack.getArtifactId()) + " (" + stack.getName() + ")");
          out.println("\tDescription: " + stack.getDescription());
-         out.println("\tArtifact: " + stack.getArtifact());
+         out.println("\tArtifactId: " + stack.getArtifactId());
+         out.println("\tGroupId: " + stack.getGroupId());
          out.println("\tRecommended Version: " + out.renderColor(ShellColor.GREEN, stack.getRecommendedVersion()));
          if (stack.getAvailableVersions().size() > 0)
          {
@@ -115,7 +116,7 @@ public class JDFPlugin implements Plugin
       //Destroying the cache, forces it to be updated
       stacksUtil.eraseRepositoryCache();
       //Force the update
-     List<Stack> stacks = stacksUtil.retrieveAvailableStacks();
+     List<Bom> stacks = stacksUtil.retrieveAvailableBoms();
      if (stacks != null){
         ShellMessages.success(out, "Stacks updated from the following repository: " + stacksUtil.getStacksRepo());
      }
@@ -128,7 +129,7 @@ public class JDFPlugin implements Plugin
     * @param version if null, user must chose one version of the selectedStack
     * @return the chosen version
     */
-   private String chooseVersion(Stack selectedStack, String version)
+   private String chooseVersion(Bom selectedStack, String version)
    {
       if (selectedStack != null && version == null)
       {
@@ -145,7 +146,7 @@ public class JDFPlugin implements Plugin
     * @param version
     * @param out
     */
-   private void handleStackInstalation(Stack selectedStack, String version, PipeOut out)
+   private void handleStackInstalation(Bom selectedStack, String version, PipeOut out)
    {
       if (!selectedStack.getRecommendedVersion().equals(version))
       {
@@ -166,9 +167,9 @@ public class JDFPlugin implements Plugin
     * @param version
     * @param out
     */
-   private void addStack(Stack selectedStack, String version, PipeOut out)
+   private void addStack(Bom selectedStack, String version, PipeOut out)
    {
-      bomProvider.installBom(selectedStack.getArtifact(), version);
+      bomProvider.installBom(selectedStack.getGroupId(), selectedStack.getArtifactId(), version);
       ShellMessages.success(out, "Stack " + selectedStack.getName() + " version " + version + " installed!");
    }
 
@@ -180,9 +181,9 @@ public class JDFPlugin implements Plugin
     * @param version
     * @param out
     */
-   private void handleStackAlreadyInstaled(Stack selectedStack, String version, PipeOut out)
+   private void handleStackAlreadyInstaled(Bom selectedStack, String version, PipeOut out)
    {
-      String previousStackVersion = bomProvider.getInstalledVersionStack(selectedStack.getArtifact());
+      String previousStackVersion = bomProvider.getInstalledVersionStack(selectedStack.getGroupId(), selectedStack.getArtifactId());
       ShellMessages.info(out, "Stack " + selectedStack.getName() + " already installed");
       // If <> installed stack version
       if (!previousStackVersion.equals(version))
@@ -192,7 +193,7 @@ public class JDFPlugin implements Plugin
                   .promptBoolean("Do you want to update this Stack version to: " + version + " ?", false);
          if (shouldUpdate)
          {
-            bomProvider.removeBom(selectedStack.getArtifact(), previousStackVersion);
+            bomProvider.removeBom(selectedStack.getGroupId(), selectedStack.getArtifactId(), previousStackVersion);
             // For an atomic update, adding stack has no user interaction if the new version is not one of the
             // recommended. So addStack() is called instead of handleStackInstalation()
             addStack(selectedStack, version, out);
@@ -214,11 +215,11 @@ public class JDFPlugin implements Plugin
     * @param out
     * @return true if has any invalid input
     */
-   private boolean isInvalidInput(Stack selectedStack, String stack, String version, PipeOut out)
+   private boolean isInvalidInput(Bom selectedStack, String stack, String version, PipeOut out)
    {
       if (selectedStack == null)
       {
-         ShellMessages.error(out, "There is no stack [" + stack + "]. Try one of those: " + availableStacks);
+         ShellMessages.error(out, "There is no stack [" + stack + "]. Try one of those: " + availableBoms);
          return true;
       }
       if (!selectedStack.getAvailableVersions().contains(version))
@@ -237,11 +238,11 @@ public class JDFPlugin implements Plugin
     * @param informedStack the stack id
     * @return stack
     */
-   private Stack getSelectedStack(String informedStack)
+   private Bom getSelectedStack(String informedStack)
    {
-      for (Stack stack : availableStacks)
+      for (Bom stack : availableBoms)
       {
-         if (stack.getId().equals(informedStack))
+         if (stack.getArtifactId().equals(informedStack))
          {
             return stack;
          }

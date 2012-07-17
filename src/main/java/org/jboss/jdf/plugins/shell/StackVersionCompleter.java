@@ -26,7 +26,7 @@ import javax.inject.Inject;
 
 import org.jboss.forge.shell.completer.CommandCompleterState;
 import org.jboss.forge.shell.completer.SimpleTokenCompleter;
-import org.jboss.jdf.plugins.stacks.Stack;
+import org.jboss.jdf.plugins.stacks.Parser.Bom;
 
 public class StackVersionCompleter extends SimpleTokenCompleter
 {
@@ -34,14 +34,14 @@ public class StackVersionCompleter extends SimpleTokenCompleter
    private CommandCompleterState state;
 
    @Inject
-   private List<Stack> availableStacks;
+   private List<Bom> availableBoms;
 
    @Override
    public Set<String> getCompletionTokens()
    {
       Set<String> versions = new TreeSet<String>();
       String informedStack = getInformedStack();
-      Stack stack = getSelectedStack(informedStack);
+      Bom stack = getSelectedStack(informedStack);
       if (stack != null)
       {
          versions.add(stack.getRecommendedVersion());
@@ -50,11 +50,11 @@ public class StackVersionCompleter extends SimpleTokenCompleter
       return versions;
    }
 
-   private Stack getSelectedStack(String informedStack)
+   private Bom getSelectedStack(String informedStack)
    {
-      for (Stack stack : availableStacks)
+      for (Bom stack : availableBoms)
       {
-         if (informedStack.equals(stack.getId()))
+         if (informedStack.equals(stack.getArtifactId()))
          {
             return stack;
          }

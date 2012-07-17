@@ -31,7 +31,7 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.forge.test.AbstractShellTest;
 import org.jboss.jdf.plugins.JDFPlugin;
 import org.jboss.jdf.plugins.providers.JDFBOMProvider;
-import org.jboss.jdf.plugins.stacks.Stack;
+import org.jboss.jdf.plugins.stacks.Parser.Bom;
 import org.jboss.jdf.plugins.stacks.StacksUtil;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.Before;
@@ -40,6 +40,7 @@ import org.junit.Test;
 public class JdfPluginTest extends AbstractShellTest
 {
 
+   private static final String STACK_GROUP = "org.jboss.bom";
    private static final String STACK_ARTIFACT = "jboss-javaee-6.0-with-errai";
    private static final String STACK_VERSION = "1.0.0.Final";
 
@@ -80,47 +81,49 @@ public class JdfPluginTest extends AbstractShellTest
    {
       queueInputLines("y");
       getShell().execute("jdf refresh-stacks");
-      Assert.assertNotNull("Stacks should be available after a refresh", stacksUtil.retrieveAvailableStacks());
+      Assert.assertNotNull("Stacks should be available after a refresh", stacksUtil.retrieveAvailableBoms());
    }
 
    @Test
    public void testAvailableStacks() throws Exception
    {
-      List<Stack> availableStacks = stacksUtil.retrieveAvailableStacks();
-      Assert.assertTrue(availableStacks.size() == 4);
+      List<Bom> availableStacks = stacksUtil.retrieveAvailableBoms();
+      Assert.assertTrue(availableStacks.size() == 6);
    }
 
    @Test
    public void testBOMInstallation() throws Exception
    {
-      Assert.assertFalse(bomProvider.isDependencyManagementInstalled(STACK_ARTIFACT));
-      bomProvider.installBom(STACK_ARTIFACT, STACK_VERSION);
-      Assert.assertTrue("Stack should be installed", bomProvider.isDependencyManagementInstalled(STACK_ARTIFACT));
+      Assert.assertFalse(bomProvider.isDependencyManagementInstalled(STACK_GROUP, STACK_ARTIFACT));
+      bomProvider.installBom(STACK_GROUP, STACK_ARTIFACT, STACK_VERSION);
+      Assert.assertTrue("Stack should be installed",
+               bomProvider.isDependencyManagementInstalled(STACK_GROUP, STACK_ARTIFACT));
    }
 
    @Test
    public void testBOMRemoval() throws Exception
    {
-      Assert.assertFalse(bomProvider.isDependencyManagementInstalled(STACK_ARTIFACT));
+      Assert.assertFalse(bomProvider.isDependencyManagementInstalled(STACK_GROUP, STACK_ARTIFACT));
       testBOMInstallation();
-      bomProvider.installBom(STACK_ARTIFACT, STACK_VERSION);
-      Assert.assertTrue("Stack should not be installed", bomProvider.isDependencyManagementInstalled(STACK_ARTIFACT));
+      bomProvider.installBom(STACK_GROUP, STACK_ARTIFACT, STACK_VERSION);
+      Assert.assertTrue("Stack should not be installed",
+               bomProvider.isDependencyManagementInstalled(STACK_GROUP, STACK_ARTIFACT));
    }
 
    @Test
    public void testGetArtifactVersion() throws Exception
    {
-      Assert.assertFalse(bomProvider.isDependencyManagementInstalled(STACK_ARTIFACT));
+      Assert.assertFalse(bomProvider.isDependencyManagementInstalled(STACK_GROUP, STACK_ARTIFACT));
       testBOMInstallation();
-      bomProvider.installBom(STACK_ARTIFACT, STACK_VERSION);
+      bomProvider.installBom(STACK_GROUP, STACK_ARTIFACT, STACK_VERSION);
       Assert.assertEquals("Stack should be installed with the same version", STACK_VERSION,
-               bomProvider.getInstalledVersionStack(STACK_ARTIFACT));
+               bomProvider.getInstalledVersionStack(STACK_GROUP, STACK_ARTIFACT));
    }
 
    @Test
    public void testStackRepoFile() throws Exception
    {
       String repo = stacksUtil.getStacksRepo();
-      Assert.assertEquals("https://raw.github.com/jboss-jdf/jdf-stack/Beta1/stacks.yaml", repo);
+      Assert.assertEquals("https://raw.github.com/jboss-jdf/jdf-stack/Beta2/stacks.yaml", repo);
    }
 }

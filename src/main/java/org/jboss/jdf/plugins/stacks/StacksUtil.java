@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.enterprise.inject.Produces;
@@ -42,10 +41,7 @@ import org.jboss.forge.env.ConfigurationScope;
 import org.jboss.forge.resources.FileResource;
 import org.jboss.forge.shell.Shell;
 import org.jboss.forge.shell.ShellMessages;
-import org.yaml.snakeyaml.TypeDescription;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.Constructor;
-import org.yaml.snakeyaml.constructor.CustomClassLoaderConstructor;
+import org.jboss.jdf.plugins.stacks.Parser.Bom;
 
 /**
  * This is a Utility class that handle the available JDF Stacks from a repository using YAML
@@ -59,7 +55,7 @@ public class StacksUtil
    private static final String BRANCH = "$BRANCH$";
    private static final String JDF_ELEMENT = "jdf";
    private static final String STACKSREPO_ELEMENT = "stacksRepo";
-   private static final String STACK_BRANCH = "Beta1";
+   private static final String STACK_BRANCH = "Beta2";
 // private static final String STACK_BRANCH = "master";
    private static final String DEFAULT_STACK_REPO = "https://raw.github.com/jboss-jdf/jdf-stack/" + BRANCH
             + "/stacks.yaml";
@@ -72,6 +68,9 @@ public class StacksUtil
 
    @Inject
    private ForgeEnvironment environment;
+   
+   @Inject
+   private Parser parser;
 
 
    /**
@@ -80,7 +79,7 @@ public class StacksUtil
     * @return Available Stacks
     */
    @Produces
-   public List<Stack> retrieveAvailableStacks()
+   public List<Bom> retrieveAvailableBoms()
    {
       String stacksRepo = getStacksRepo();
       InputStream repoStream = getCachedRepoStream(stacksRepo, environment.isOnline());
@@ -112,7 +111,7 @@ public class StacksUtil
          ShellMessages.error(shell, "The Cache is empty. Try going online to get the list of available JDF Stacks!");
          return null;
       }
-      List<Stack> stacks = populateStacksFromStream(repoStream);
+      List<Bom> stacks = parser.parse(repoStream).getAvailableBoms();
       return stacks;
 
    }
@@ -126,40 +125,6 @@ public class StacksUtil
       }
    }
 
-   /**
-    * Parses the Stream and converts YAML content to a Javabean
-    * 
-    * @param stream
-    * @return the converted list of stacks
-    */
-   private List<Stack> populateStacksFromStream(final InputStream stream)
-   {
-      List<Stack> stacksList = new ArrayList<Stack>();
-
-      Constructor constructor = new CustomClassLoaderConstructor(Stack.class, this.getClass().getClassLoader());
-      TypeDescription stackDescription = new TypeDescription(Stack.class);
-      stackDescription.putListPropertyType("availableVersions", String.class);
-      constructor.addTypeDescription(stackDescription);
-      Yaml yaml = new Yaml(constructor);
-
-      for (Object o : yaml.loadAll(stream))
-      {
-         if (o == null)
-         {
-            continue;
-         }
-
-         Stack stack = (Stack) o;
-         if (!stack.getAvailableVersions().contains(stack.getRecommendedVersion()))
-         {
-            throw new RuntimeException("Invalid repository information: The recommended version ["
-                     + stack.getRecommendedVersion() + " for stack [" + stack
-                     + "] is not one of the available versions");
-         }
-         stacksList.add(stack);
-      }
-      return stacksList;
-   }
 
    private InputStream retrieveStacksFromRemoteRepository(final String stacksRepo) throws ClientProtocolException,
             IOException, URISyntaxException
@@ -257,7 +222,7 @@ public class StacksUtil
          userConfig.setProperty(JDF_ELEMENT + "." + STACKSREPO_ELEMENT, releaseRepo);
          //silently reset the cache 
          eraseRepositoryCache();
-         retrieveAvailableStacks();
+         retrieveAvailableBoms();
       }
 
    }

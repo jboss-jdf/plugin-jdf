@@ -21,10 +21,10 @@ import java.util.List;
 import javax.inject.Inject;
 
 import org.jboss.forge.shell.completer.SimpleTokenCompleter;
-import org.jboss.jdf.plugins.stacks.Stack;
+import org.jboss.jdf.plugins.stacks.Parser.Bom;
 
 /**
- * Return the list of stacks
+ * Return the list of stack boms
  * 
  * @author <a href="mailto:benevides@redhat.com">Rafael Benevides</a>
  *
@@ -33,12 +33,12 @@ public class AvailableStacksCompleter extends SimpleTokenCompleter
 {
 
    @Inject
-   private List<Stack> availableStacks;
+   private List<Bom> availableBoms;
 
    @Override
    public Iterable<?> getCompletionTokens()
    {
-      return availableStacks;
+      return availableBoms;
    }
 
 }
