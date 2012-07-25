@@ -27,18 +27,16 @@ import org.jboss.jdf.plugins.stacks.Parser.Bom;
  * Return the list of stack boms
  * 
  * @author <a href="mailto:benevides@redhat.com">Rafael Benevides</a>
- *
+ * 
  */
-public class AvailableStacksCompleter extends SimpleTokenCompleter
-{
+public class AvailableStacksCompleter extends SimpleTokenCompleter {
 
-   @Inject
-   private List<Bom> availableBoms;
+    @Inject
+    private List<Bom> availableBoms;
 
-   @Override
-   public Iterable<?> getCompletionTokens()
-   {
-      return availableBoms;
-   }
+    @Override
+    public Iterable<?> getCompletionTokens() {
+        return availableBoms;
+    }
 
 }

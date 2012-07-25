@@ -49,215 +49,181 @@ import org.jboss.jdf.plugins.stacks.Parser.Bom;
  * @author <a href="mailto:benevides@redhat.com">Rafael Benevides</a>
  * 
  */
-public class StacksUtil
-{
+public class StacksUtil {
 
-   private static final String BRANCH = "$BRANCH$";
-   private static final String JDF_ELEMENT = "jdf";
-   private static final String STACKSREPO_ELEMENT = "stacksRepo";
-   private static final String STACK_BRANCH = "Beta2";
-// private static final String STACK_BRANCH = "master";
-   private static final String DEFAULT_STACK_REPO = "https://raw.github.com/jboss-jdf/jdf-stack/" + BRANCH
-            + "/stacks.yaml";
+    private static final String BRANCH = "$BRANCH$";
+    private static final String JDF_ELEMENT = "jdf";
+    private static final String STACKSREPO_ELEMENT = "stacksRepo";
+    private static final String STACK_BRANCH = "Beta2";
+    // private static final String STACK_BRANCH = "master";
+    private static final String DEFAULT_STACK_REPO = "https://raw.github.com/jboss-jdf/jdf-stack/" + BRANCH + "/stacks.yaml";
 
-   @Inject
-   private Shell shell;
+    @Inject
+    private Shell shell;
 
-   @Inject
-   private Configuration configuration;
+    @Inject
+    private Configuration configuration;
 
-   @Inject
-   private ForgeEnvironment environment;
-   
-   @Inject
-   private Parser parser;
+    @Inject
+    private ForgeEnvironment environment;
 
+    @Inject
+    private Parser parser;
 
-   /**
-    * This method verifies all available Stacks in repository
-    * 
-    * @return Available Stacks
-    */
-   @Produces
-   public List<Bom> retrieveAvailableBoms()
-   {
-      String stacksRepo = getStacksRepo();
-      InputStream repoStream = getCachedRepoStream(stacksRepo, environment.isOnline());
-      // if cache expired
-      if (repoStream == null)
-      {
-         try
-         {
-            showVerboseMessage("Retrieving Stacks from Remote repository");
-            repoStream = retrieveStacksFromRemoteRepository(stacksRepo);
-            setCachedRepoStream(stacksRepo, repoStream);
-            repoStream = getCachedRepoStream(stacksRepo, true);
-         }
-         catch (Exception e)
-         {
-            if (shell.isVerbose())
-            {
-               e.printStackTrace();
+    /**
+     * This method verifies all available Stacks in repository
+     * 
+     * @return Available Stacks
+     */
+    @Produces
+    public List<Bom> retrieveAvailableBoms() {
+        String stacksRepo = getStacksRepo();
+        InputStream repoStream = getCachedRepoStream(stacksRepo, environment.isOnline());
+        // if cache expired
+        if (repoStream == null) {
+            try {
+                showVerboseMessage("Retrieving Stacks from Remote repository");
+                repoStream = retrieveStacksFromRemoteRepository(stacksRepo);
+                setCachedRepoStream(stacksRepo, repoStream);
+                repoStream = getCachedRepoStream(stacksRepo, true);
+            } catch (Exception e) {
+                if (shell.isVerbose()) {
+                    e.printStackTrace();
+                }
+                shell.println();
+                ShellMessages.warn(shell, "It was not possible to contact the repository at " + stacksRepo);
+                ShellMessages.warn(shell, "Falling back to cache!");
+                repoStream = getCachedRepoStream(stacksRepo, false);
             }
+        }
+        // If the Repostream stills empty after falling back to cache
+        if (repoStream == null) {
+            ShellMessages.error(shell, "The Cache is empty. Try going online to get the list of available JDF Stacks!");
+            return null;
+        }
+        List<Bom> stacks = parser.parse(repoStream).getAvailableBoms();
+        return stacks;
+
+    }
+
+    private void showVerboseMessage(String message) {
+        if (shell.isVerbose()) {
             shell.println();
-            ShellMessages.warn(shell, "It was not possible to contact the repository at " + stacksRepo);
-            ShellMessages.warn(shell, "Falling back to cache!");
-            repoStream = getCachedRepoStream(stacksRepo, false);
-         }
-      }
-      // If the Repostream stills empty after falling back to cache
-      if (repoStream == null)
-      {
-         ShellMessages.error(shell, "The Cache is empty. Try going online to get the list of available JDF Stacks!");
-         return null;
-      }
-      List<Bom> stacks = parser.parse(repoStream).getAvailableBoms();
-      return stacks;
+            shell.println(message);
+        }
+    }
 
-   }
+    private InputStream retrieveStacksFromRemoteRepository(final String stacksRepo) throws ClientProtocolException,
+            IOException, URISyntaxException {
+        if (stacksRepo.startsWith("http")) {
+            HttpGet httpGet = new HttpGet(stacksRepo);
+            DefaultHttpClient client = new DefaultHttpClient();
+            configureProxy(client);
+            HttpResponse httpResponse = client.execute(httpGet);
+            shell.println();
+            switch (httpResponse.getStatusLine().getStatusCode()) {
+                case 200:
+                    showVerboseMessage("Connected to repository! Getting available Stacks");
+                    break;
 
-   private void showVerboseMessage(String message)
-   {
-      if (shell.isVerbose())
-      {
-         shell.println();
-         shell.println(message);
-      }
-   }
+                case 404:
+                    ShellMessages.error(shell, "Failed! (Stacks file not found: " + stacksRepo + ")");
+                    return null;
 
+                default:
+                    ShellMessages.error(shell, "Failed! (server returned status code: "
+                            + httpResponse.getStatusLine().getStatusCode());
+                    return null;
+            }
+            return httpResponse.getEntity().getContent();
+        } else if (stacksRepo.startsWith("file")) {
+            return new FileInputStream(new File(URI.create(stacksRepo)));
+        }
+        return null;
+    }
 
-   private InputStream retrieveStacksFromRemoteRepository(final String stacksRepo) throws ClientProtocolException,
-            IOException, URISyntaxException
-   {
-      if (stacksRepo.startsWith("http"))
-      {
-         HttpGet httpGet = new HttpGet(stacksRepo);
-         DefaultHttpClient client = new DefaultHttpClient();
-         configureProxy(client);
-         HttpResponse httpResponse = client.execute(httpGet);
-         shell.println();
-         switch (httpResponse.getStatusLine().getStatusCode())
-         {
-         case 200:
-            showVerboseMessage("Connected to repository! Getting available Stacks");
-            break;
+    private InputStream getCachedRepoStream(final String repo, final boolean online) {
+        FileResource<?> cachedRepo = getCacheFileResource();
+        if (cachedRepo.exists()) {
+            long lastModified = cachedRepo.getUnderlyingResourceObject().lastModified();
+            // if online, consider the cache valid until it expires after 24 hours
+            if (!online || System.currentTimeMillis() - lastModified <= (1000 * 60 * 60 * 24)) {
+                return cachedRepo.getResourceInputStream();
+            }
+        }
+        return null;
+    }
 
-         case 404:
-            ShellMessages.error(shell, "Failed! (Stacks file not found: " + stacksRepo + ")");
-            return null;
+    private void setCachedRepoStream(final String repo, final InputStream stream) {
+        FileResource<?> cachedRepo = getCacheFileResource();
+        if (!cachedRepo.exists()) {
+            cachedRepo.createNewFile();
+        }
+        cachedRepo.setContents(stream);
+    }
 
-         default:
-            ShellMessages.error(shell, "Failed! (server returned status code: "
-                     + httpResponse.getStatusLine().getStatusCode());
-            return null;
-         }
-         return httpResponse.getEntity().getContent();
-      }
-      else if (stacksRepo.startsWith("file"))
-      {
-         return new FileInputStream(new File(URI.create(stacksRepo)));
-      }
-      return null;
-   }
+    public String getStacksRepo() {
+        Configuration userConfig = configuration.getScopedConfiguration(ConfigurationScope.USER);
+        verifyIfNeedConfigurationUpdate(userConfig);
+        Configuration jdfConfig = userConfig.subset(JDF_ELEMENT);
+        String stacksRepo = jdfConfig.getString(STACKSREPO_ELEMENT);
+        if (stacksRepo == null) {
+            String jdfStackRepo = DEFAULT_STACK_REPO.replaceAll(BRANCH, STACK_BRANCH);
+            userConfig.setProperty(JDF_ELEMENT + "." + STACKSREPO_ELEMENT, jdfStackRepo);
+            return jdfStackRepo;
+        } else {
+            return jdfConfig.getString(STACKSREPO_ELEMENT);
+        }
+    }
 
-   private InputStream getCachedRepoStream(final String repo, final boolean online)
-   {
-      FileResource<?> cachedRepo = getCacheFileResource();
-      if (cachedRepo.exists())
-      {
-         long lastModified = cachedRepo.getUnderlyingResourceObject().lastModified();
-         // if online, consider the cache valid until it expires after 24 hours
-         if (!online || System.currentTimeMillis() - lastModified <= (1000 * 60 * 60 * 24))
-         {
-            return cachedRepo.getResourceInputStream();
-         }
-      }
-      return null;
-   }
+    /**
+     * Verifies if the config file need to be updated. The update procedure will proceed if the version in config file points to
+     * a official repository and it is changed in this release
+     * 
+     * @param userConfig
+     */
+    private void verifyIfNeedConfigurationUpdate(Configuration userConfig) {
+        Configuration jdfConfig = userConfig.subset(JDF_ELEMENT);
+        String defaultRepoPrefix = DEFAULT_STACK_REPO.substring(0, DEFAULT_STACK_REPO.lastIndexOf(BRANCH));
+        String configRepo = jdfConfig.getString(STACKSREPO_ELEMENT);
+        String releaseRepo = DEFAULT_STACK_REPO.replace(BRANCH, STACK_BRANCH);
+        // If config uses the official repo and it is changed in this release
+        if (configRepo.startsWith(defaultRepoPrefix) && !configRepo.equals(releaseRepo)) {
+            // silently update the configuration
+            userConfig.setProperty(JDF_ELEMENT + "." + STACKSREPO_ELEMENT, releaseRepo);
+            // silently reset the cache
+            eraseRepositoryCache();
+            retrieveAvailableBoms();
+        }
 
-   private void setCachedRepoStream(final String repo, final InputStream stream)
-   {
-      FileResource<?> cachedRepo = getCacheFileResource();
-      if (!cachedRepo.exists())
-      {
-         cachedRepo.createNewFile();
-      }
-      cachedRepo.setContents(stream);
-   }
+    }
 
-   public String getStacksRepo()
-   {
-      Configuration userConfig = configuration.getScopedConfiguration(ConfigurationScope.USER);
-      verifyIfNeedConfigurationUpdate(userConfig);
-      Configuration jdfConfig = userConfig.subset(JDF_ELEMENT);
-      String stacksRepo = jdfConfig.getString(STACKSREPO_ELEMENT);
-      if (stacksRepo == null)
-      {
-         String jdfStackRepo = DEFAULT_STACK_REPO.replaceAll(BRANCH, STACK_BRANCH);
-         userConfig.setProperty(JDF_ELEMENT + "." + STACKSREPO_ELEMENT, jdfStackRepo);
-         return jdfStackRepo;
-      }
-      else
-      {
-         return jdfConfig.getString(STACKSREPO_ELEMENT);
-      }
-   }
+    @SuppressWarnings("unchecked")
+    private FileResource<?> getCacheFileResource() {
+        return shell.getEnvironment().getConfigDirectory().getChildOfType(FileResource.class, "stacks.yaml");
+    }
 
-   /**
-    * Verifies if the config file need to be updated. The update procedure will proceed if the version in config file
-    * points to a official repository and it is changed in this release
-    * 
-    * @param userConfig
-    */
-   private void verifyIfNeedConfigurationUpdate(Configuration userConfig)
-   {
-      Configuration jdfConfig = userConfig.subset(JDF_ELEMENT);
-      String defaultRepoPrefix = DEFAULT_STACK_REPO.substring(0, DEFAULT_STACK_REPO.lastIndexOf(BRANCH));
-      String configRepo = jdfConfig.getString(STACKSREPO_ELEMENT);
-      String releaseRepo = DEFAULT_STACK_REPO.replace(BRANCH, STACK_BRANCH);
-      // If config uses the official repo and it is changed in this release
-      if (configRepo.startsWith(defaultRepoPrefix) && !configRepo.equals(releaseRepo))
-      {
-         //silently update the configuration
-         userConfig.setProperty(JDF_ELEMENT + "." + STACKSREPO_ELEMENT, releaseRepo);
-         //silently reset the cache 
-         eraseRepositoryCache();
-         retrieveAvailableBoms();
-      }
+    private void configureProxy(final DefaultHttpClient client) {
+        Configuration proxyConfig = configuration.getScopedConfiguration(ConfigurationScope.USER).subset("proxy");
+        if (proxyConfig != null && !proxyConfig.isEmpty()) {
+            String proxyHost = proxyConfig.getString("host");
+            int proxyPort = proxyConfig.getInt("port");
+            HttpHost proxy = new HttpHost(proxyHost, proxyPort);
+            client.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
+            String proxyUsername = proxyConfig.getString("username");
+            if (proxyUsername != null && !proxyUsername.equals("")) {
+                String proxyPassword = proxyConfig.getString("password");
+                AuthScope authScope = new AuthScope(proxyHost, proxyPort);
+                UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(proxyUsername, proxyPassword);
+                client.getCredentialsProvider().setCredentials(authScope, credentials);
+            }
+        }
+    }
 
-   }
+    public void eraseRepositoryCache() {
+        FileResource<?> repositoryCache = getCacheFileResource();
+        repositoryCache.delete();
 
-   @SuppressWarnings("unchecked")
-   private FileResource<?> getCacheFileResource()
-   {
-      return shell.getEnvironment().getConfigDirectory().getChildOfType(FileResource.class, "stacks.yaml");
-   }
-
-   private void configureProxy(final DefaultHttpClient client)
-   {
-      Configuration proxyConfig = configuration.getScopedConfiguration(ConfigurationScope.USER).subset("proxy");
-      if (proxyConfig != null && !proxyConfig.isEmpty())
-      {
-         String proxyHost = proxyConfig.getString("host");
-         int proxyPort = proxyConfig.getInt("port");
-         HttpHost proxy = new HttpHost(proxyHost, proxyPort);
-         client.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
-         String proxyUsername = proxyConfig.getString("username");
-         if (proxyUsername != null && !proxyUsername.equals(""))
-         {
-            String proxyPassword = proxyConfig.getString("password");
-            AuthScope authScope = new AuthScope(proxyHost, proxyPort);
-            UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(proxyUsername, proxyPassword);
-            client.getCredentialsProvider().setCredentials(authScope, credentials);
-         }
-      }
-   }
-
-   public void eraseRepositoryCache()
-   {
-      FileResource<?> repositoryCache = getCacheFileResource();
-      repositoryCache.delete();
-      
-   }
+    }
 
 }

@@ -47,207 +47,181 @@ import org.jboss.jdf.plugins.stacks.StacksUtil;
  */
 @Alias("jdf")
 @RequiresProject
-public class JDFPlugin implements Plugin
-{
-   public static final String OPTION_STACK = "stack";
+public class JDFPlugin implements Plugin {
+    public static final String OPTION_STACK = "stack";
 
-   @Inject
-   private List<Bom> availableBoms;
+    @Inject
+    private List<Bom> availableBoms;
 
-   @Inject
-   private JDFBOMProvider bomProvider;
+    @Inject
+    private JDFBOMProvider bomProvider;
 
-   @Inject
-   private ShellPrompt shellPrompt;
-   
-   @Inject
-   private StacksUtil stacksUtil;
+    @Inject
+    private ShellPrompt shellPrompt;
 
-   @Command(value = "use-stack", help = "Enable JDF JBoss Stack in to a Project")
-   public void installStack(
+    @Inject
+    private StacksUtil stacksUtil;
+
+    @Command(value = "use-stack", help = "Enable JDF JBoss Stack in to a Project")
+    public void installStack(
             @Option(name = OPTION_STACK, required = true, completer = AvailableStacksCompleter.class, description = "Stack Id") String stack,
-            @Option(name = "version", required = false, completer = StackVersionCompleter.class,
-                     description = "Recommended JDF Stack Version") String version,
-            PipeOut out)
-   {
-      Bom selectedStack = getSelectedStack(stack);
-      String chosenVersion = chooseVersion(selectedStack, version);
-      // validate input
-      if (isInvalidInput(selectedStack, stack, chosenVersion, out))
-      {
-         return;
-      }
-
-      if (bomProvider.isDependencyManagementInstalled(selectedStack.getGroupId(), selectedStack.getArtifactId()))
-      {
-         handleStackAlreadyInstaled(selectedStack, chosenVersion, out);
-      }
-      else
-      {
-         handleStackInstalation(selectedStack, chosenVersion, out);
-      }
-   }
-
-   @Command(value = "show-stacks", help = "List the available stacks")
-   public void listStacks(PipeOut out)
-   {
-      for (Bom stack : availableBoms)
-      {
-         out.println(" - " + out.renderColor(ShellColor.BOLD, stack.getArtifactId()) + " (" + stack.getName() + ")");
-         out.println("\tDescription: " + stack.getDescription());
-         out.println("\tArtifactId: " + stack.getArtifactId());
-         out.println("\tGroupId: " + stack.getGroupId());
-         out.println("\tRecommended Version: " + out.renderColor(ShellColor.GREEN, stack.getRecommendedVersion()));
-         if (stack.getAvailableVersions().size() > 0)
-         {
-            out.println("\tAvailable Versions:");
-         }
-         for (String availableVersion : stack.getAvailableVersions())
-         {
-            out.println(ShellColor.BLUE, "\t\t - " + availableVersion);
-         }
-         out.println();
-      }
-   }
-   
-   @Command(value = "refresh-stacks", help = "Force the update of the Stacks. It is updated automatically once a day")
-   public void refreshStacks(PipeOut out)
-   {
-      //Destroying the cache, forces it to be updated
-      stacksUtil.eraseRepositoryCache();
-      //Force the update
-     List<Bom> stacks = stacksUtil.retrieveAvailableBoms();
-     if (stacks != null){
-        ShellMessages.success(out, "Stacks updated from the following repository: " + stacksUtil.getStacksRepo());
-     }
-   }
-
-   /**
-    * Permits the user choose on of the available versions of the informed stack.
-    * 
-    * @param selectedStack
-    * @param version if null, user must chose one version of the selectedStack
-    * @return the chosen version
-    */
-   private String chooseVersion(Bom selectedStack, String version)
-   {
-      if (selectedStack != null && version == null)
-      {
-         return shellPrompt.promptChoiceTyped("Whice version of stack " + selectedStack,
-                  selectedStack.getAvailableVersions(), selectedStack.getRecommendedVersion());
-      }
-      return version;
-   }
-
-   /**
-    * Interacts with the user in a Stack Installation
-    * 
-    * @param selectedStack
-    * @param version
-    * @param out
-    */
-   private void handleStackInstalation(Bom selectedStack, String version, PipeOut out)
-   {
-      if (!selectedStack.getRecommendedVersion().equals(version))
-      {
-         boolean installNotRecommended = shellPrompt.promptBoolean(
-                  "You didn't choose the recommended version. Do you want continue the installation?", false);
-         if (!installNotRecommended)
-         {
+            @Option(name = "version", required = false, completer = StackVersionCompleter.class, description = "Recommended JDF Stack Version") String version,
+            PipeOut out) {
+        Bom selectedStack = getSelectedStack(stack);
+        String chosenVersion = chooseVersion(selectedStack, version);
+        // validate input
+        if (isInvalidInput(selectedStack, stack, chosenVersion, out)) {
             return;
-         }
-      }
-      addStack(selectedStack, version, out);
-   }
+        }
 
-   /**
-    * Add a Stack (almost) without user interaction
-    * 
-    * @param selectedStack
-    * @param version
-    * @param out
-    */
-   private void addStack(Bom selectedStack, String version, PipeOut out)
-   {
-      bomProvider.installBom(selectedStack.getGroupId(), selectedStack.getArtifactId(), version);
-      ShellMessages.success(out, "Stack " + selectedStack.getName() + " version " + version + " installed!");
-   }
+        if (bomProvider.isDependencyManagementInstalled(selectedStack.getGroupId(), selectedStack.getArtifactId())) {
+            handleStackAlreadyInstaled(selectedStack, chosenVersion, out);
+        } else {
+            handleStackInstalation(selectedStack, chosenVersion, out);
+        }
+    }
 
-   /**
-    * Interacts with the user with a Stack is already installed. If the installed Stack is in a different version, the
-    * JDF plugin prompts the user if an update is necessary.
-    * 
-    * @param selectedStack
-    * @param version
-    * @param out
-    */
-   private void handleStackAlreadyInstaled(Bom selectedStack, String version, PipeOut out)
-   {
-      String previousStackVersion = bomProvider.getInstalledVersionStack(selectedStack.getGroupId(), selectedStack.getArtifactId());
-      ShellMessages.info(out, "Stack " + selectedStack.getName() + " already installed");
-      // If <> installed stack version
-      if (!previousStackVersion.equals(version))
-      {
-         ShellMessages.warn(out, " Another version of this stack is installed: " + previousStackVersion);
-         boolean shouldUpdate = shellPrompt
-                  .promptBoolean("Do you want to update this Stack version to: " + version + " ?", false);
-         if (shouldUpdate)
-         {
-            bomProvider.removeBom(selectedStack.getGroupId(), selectedStack.getArtifactId(), previousStackVersion);
-            // For an atomic update, adding stack has no user interaction if the new version is not one of the
-            // recommended. So addStack() is called instead of handleStackInstalation()
-            addStack(selectedStack, version, out);
-         }
-      }
-      out.println();
-   }
+    @Command(value = "show-stacks", help = "List the available stacks")
+    public void listStacks(PipeOut out) {
+        for (Bom stack : availableBoms) {
+            out.println(" - " + out.renderColor(ShellColor.BOLD, stack.getArtifactId()) + " (" + stack.getName() + ")");
+            out.println("\tDescription: " + stack.getDescription());
+            out.println("\tArtifactId: " + stack.getArtifactId());
+            out.println("\tGroupId: " + stack.getGroupId());
+            out.println("\tRecommended Version: " + out.renderColor(ShellColor.GREEN, stack.getRecommendedVersion()));
+            if (stack.getAvailableVersions().size() > 0) {
+                out.println("\tAvailable Versions:");
+            }
+            for (String availableVersion : stack.getAvailableVersions()) {
+                out.println(ShellColor.BLUE, "\t\t - " + availableVersion);
+            }
+            out.println();
+        }
+    }
 
-   /**
-    * Validate the user input values.
-    * 
-    * The selected Stack should be one of the available stacks.
-    * 
-    * The version must be one of the available versions of the stack.
-    * 
-    * @param selectedStack
-    * @param stack
-    * @param version
-    * @param out
-    * @return true if has any invalid input
-    */
-   private boolean isInvalidInput(Bom selectedStack, String stack, String version, PipeOut out)
-   {
-      if (selectedStack == null)
-      {
-         ShellMessages.error(out, "There is no stack [" + stack + "]. Try one of those: " + availableBoms);
-         return true;
-      }
-      if (!selectedStack.getAvailableVersions().contains(version))
-      {
-         ShellMessages.error(out, "There is no version [" + version + "] for this stack [" + selectedStack
-                  + "]. Try one of those: " + selectedStack.getAvailableVersions());
-         return true;
-      }
-      return false;
+    @Command(value = "refresh-stacks", help = "Force the update of the Stacks. It is updated automatically once a day")
+    public void refreshStacks(PipeOut out) {
+        // Destroying the cache, forces it to be updated
+        stacksUtil.eraseRepositoryCache();
+        // Force the update
+        List<Bom> stacks = stacksUtil.retrieveAvailableBoms();
+        if (stacks != null) {
+            ShellMessages.success(out, "Stacks updated from the following repository: " + stacksUtil.getStacksRepo());
+        }
+    }
 
-   }
+    /**
+     * Permits the user choose on of the available versions of the informed stack.
+     * 
+     * @param selectedStack
+     * @param version if null, user must chose one version of the selectedStack
+     * @return the chosen version
+     */
+    private String chooseVersion(Bom selectedStack, String version) {
+        if (selectedStack != null && version == null) {
+            return shellPrompt.promptChoiceTyped("Whice version of stack " + selectedStack,
+                    selectedStack.getAvailableVersions(), selectedStack.getRecommendedVersion());
+        }
+        return version;
+    }
 
-   /**
-    * Finds the stack object based on its id
-    * 
-    * @param informedStack the stack id
-    * @return stack
-    */
-   private Bom getSelectedStack(String informedStack)
-   {
-      for (Bom stack : availableBoms)
-      {
-         if (stack.getArtifactId().equals(informedStack))
-         {
-            return stack;
-         }
-      }
-      return null;
-   }
+    /**
+     * Interacts with the user in a Stack Installation
+     * 
+     * @param selectedStack
+     * @param version
+     * @param out
+     */
+    private void handleStackInstalation(Bom selectedStack, String version, PipeOut out) {
+        if (!selectedStack.getRecommendedVersion().equals(version)) {
+            boolean installNotRecommended = shellPrompt.promptBoolean(
+                    "You didn't choose the recommended version. Do you want continue the installation?", false);
+            if (!installNotRecommended) {
+                return;
+            }
+        }
+        addStack(selectedStack, version, out);
+    }
+
+    /**
+     * Add a Stack (almost) without user interaction
+     * 
+     * @param selectedStack
+     * @param version
+     * @param out
+     */
+    private void addStack(Bom selectedStack, String version, PipeOut out) {
+        bomProvider.installBom(selectedStack.getGroupId(), selectedStack.getArtifactId(), version);
+        ShellMessages.success(out, "Stack " + selectedStack.getName() + " version " + version + " installed!");
+    }
+
+    /**
+     * Interacts with the user with a Stack is already installed. If the installed Stack is in a different version, the JDF
+     * plugin prompts the user if an update is necessary.
+     * 
+     * @param selectedStack
+     * @param version
+     * @param out
+     */
+    private void handleStackAlreadyInstaled(Bom selectedStack, String version, PipeOut out) {
+        String previousStackVersion = bomProvider.getInstalledVersionStack(selectedStack.getGroupId(),
+                selectedStack.getArtifactId());
+        ShellMessages.info(out, "Stack " + selectedStack.getName() + " already installed");
+        // If <> installed stack version
+        if (!previousStackVersion.equals(version)) {
+            ShellMessages.warn(out, " Another version of this stack is installed: " + previousStackVersion);
+            boolean shouldUpdate = shellPrompt.promptBoolean("Do you want to update this Stack version to: " + version + " ?",
+                    false);
+            if (shouldUpdate) {
+                bomProvider.removeBom(selectedStack.getGroupId(), selectedStack.getArtifactId(), previousStackVersion);
+                // For an atomic update, adding stack has no user interaction if the new version is not one of the
+                // recommended. So addStack() is called instead of handleStackInstalation()
+                addStack(selectedStack, version, out);
+            }
+        }
+        out.println();
+    }
+
+    /**
+     * Validate the user input values.
+     * 
+     * The selected Stack should be one of the available stacks.
+     * 
+     * The version must be one of the available versions of the stack.
+     * 
+     * @param selectedStack
+     * @param stack
+     * @param version
+     * @param out
+     * @return true if has any invalid input
+     */
+    private boolean isInvalidInput(Bom selectedStack, String stack, String version, PipeOut out) {
+        if (selectedStack == null) {
+            ShellMessages.error(out, "There is no stack [" + stack + "]. Try one of those: " + availableBoms);
+            return true;
+        }
+        if (!selectedStack.getAvailableVersions().contains(version)) {
+            ShellMessages.error(out, "There is no version [" + version + "] for this stack [" + selectedStack
+                    + "]. Try one of those: " + selectedStack.getAvailableVersions());
+            return true;
+        }
+        return false;
+
+    }
+
+    /**
+     * Finds the stack object based on its id
+     * 
+     * @param informedStack the stack id
+     * @return stack
+     */
+    private Bom getSelectedStack(String informedStack) {
+        for (Bom stack : availableBoms) {
+            if (stack.getArtifactId().equals(informedStack)) {
+                return stack;
+            }
+        }
+        return null;
+    }
 
 }

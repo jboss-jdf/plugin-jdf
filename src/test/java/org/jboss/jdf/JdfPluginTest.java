@@ -37,93 +37,81 @@ import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.Before;
 import org.junit.Test;
 
-public class JdfPluginTest extends AbstractShellTest
-{
+public class JdfPluginTest extends AbstractShellTest {
 
-   private static final String STACK_GROUP = "org.jboss.bom";
-   private static final String STACK_ARTIFACT = "jboss-javaee-6.0-with-errai";
-   private static final String STACK_VERSION = "1.0.0.Final";
+    private static final String STACK_GROUP = "org.jboss.bom";
+    private static final String STACK_ARTIFACT = "jboss-javaee-6.0-with-errai";
+    private static final String STACK_VERSION = "1.0.0.Final";
 
-   @Inject
-   private JDFBOMProvider bomProvider;
+    @Inject
+    private JDFBOMProvider bomProvider;
 
-   @Inject
-   private StacksUtil stacksUtil;
+    @Inject
+    private StacksUtil stacksUtil;
 
-   @Before
-   public void setup() throws Exception
-   {
-      initializeJavaProject();
-   }
+    @Before
+    public void setup() throws Exception {
+        initializeJavaProject();
+    }
 
-   @Deployment
-   public static JavaArchive getDeployment()
-   {
-      return AbstractShellTest.getDeployment().addPackages(true, JDFPlugin.class.getPackage());
-   }
+    @Deployment
+    public static JavaArchive getDeployment() {
+        return AbstractShellTest.getDeployment().addPackages(true, JDFPlugin.class.getPackage());
+    }
 
-   @Test
-   public void testShellexecuteUseStack() throws Exception
-   {
-      queueInputLines("y");
-      getShell().execute("jdf use-stack --stack " + STACK_ARTIFACT + " --version " + STACK_VERSION);
-   }
+    @Test
+    public void testShellexecuteUseStack() throws Exception {
+        queueInputLines("y");
+        getShell().execute("jdf use-stack --stack " + STACK_ARTIFACT + " --version " + STACK_VERSION);
+    }
 
-   @Test
-   public void testShellexecuteShowStacks() throws Exception
-   {
-      queueInputLines("y");
-      getShell().execute("jdf show-stacks");
-   }
+    @Test
+    public void testShellexecuteShowStacks() throws Exception {
+        queueInputLines("y");
+        getShell().execute("jdf show-stacks");
+    }
 
-   @Test
-   public void testShellexecuteRefreshStacks() throws Exception
-   {
-      queueInputLines("y");
-      getShell().execute("jdf refresh-stacks");
-      Assert.assertNotNull("Stacks should be available after a refresh", stacksUtil.retrieveAvailableBoms());
-   }
+    @Test
+    public void testShellexecuteRefreshStacks() throws Exception {
+        queueInputLines("y");
+        getShell().execute("jdf refresh-stacks");
+        Assert.assertNotNull("Stacks should be available after a refresh", stacksUtil.retrieveAvailableBoms());
+    }
 
-   @Test
-   public void testAvailableStacks() throws Exception
-   {
-      List<Bom> availableStacks = stacksUtil.retrieveAvailableBoms();
-      Assert.assertTrue(availableStacks.size() == 6);
-   }
+    @Test
+    public void testAvailableStacks() throws Exception {
+        List<Bom> availableStacks = stacksUtil.retrieveAvailableBoms();
+        Assert.assertTrue(availableStacks.size() == 6);
+    }
 
-   @Test
-   public void testBOMInstallation() throws Exception
-   {
-      Assert.assertFalse(bomProvider.isDependencyManagementInstalled(STACK_GROUP, STACK_ARTIFACT));
-      bomProvider.installBom(STACK_GROUP, STACK_ARTIFACT, STACK_VERSION);
-      Assert.assertTrue("Stack should be installed",
-               bomProvider.isDependencyManagementInstalled(STACK_GROUP, STACK_ARTIFACT));
-   }
+    @Test
+    public void testBOMInstallation() throws Exception {
+        Assert.assertFalse(bomProvider.isDependencyManagementInstalled(STACK_GROUP, STACK_ARTIFACT));
+        bomProvider.installBom(STACK_GROUP, STACK_ARTIFACT, STACK_VERSION);
+        Assert.assertTrue("Stack should be installed", bomProvider.isDependencyManagementInstalled(STACK_GROUP, STACK_ARTIFACT));
+    }
 
-   @Test
-   public void testBOMRemoval() throws Exception
-   {
-      Assert.assertFalse(bomProvider.isDependencyManagementInstalled(STACK_GROUP, STACK_ARTIFACT));
-      testBOMInstallation();
-      bomProvider.installBom(STACK_GROUP, STACK_ARTIFACT, STACK_VERSION);
-      Assert.assertTrue("Stack should not be installed",
-               bomProvider.isDependencyManagementInstalled(STACK_GROUP, STACK_ARTIFACT));
-   }
+    @Test
+    public void testBOMRemoval() throws Exception {
+        Assert.assertFalse(bomProvider.isDependencyManagementInstalled(STACK_GROUP, STACK_ARTIFACT));
+        testBOMInstallation();
+        bomProvider.installBom(STACK_GROUP, STACK_ARTIFACT, STACK_VERSION);
+        Assert.assertTrue("Stack should not be installed",
+                bomProvider.isDependencyManagementInstalled(STACK_GROUP, STACK_ARTIFACT));
+    }
 
-   @Test
-   public void testGetArtifactVersion() throws Exception
-   {
-      Assert.assertFalse(bomProvider.isDependencyManagementInstalled(STACK_GROUP, STACK_ARTIFACT));
-      testBOMInstallation();
-      bomProvider.installBom(STACK_GROUP, STACK_ARTIFACT, STACK_VERSION);
-      Assert.assertEquals("Stack should be installed with the same version", STACK_VERSION,
-               bomProvider.getInstalledVersionStack(STACK_GROUP, STACK_ARTIFACT));
-   }
+    @Test
+    public void testGetArtifactVersion() throws Exception {
+        Assert.assertFalse(bomProvider.isDependencyManagementInstalled(STACK_GROUP, STACK_ARTIFACT));
+        testBOMInstallation();
+        bomProvider.installBom(STACK_GROUP, STACK_ARTIFACT, STACK_VERSION);
+        Assert.assertEquals("Stack should be installed with the same version", STACK_VERSION,
+                bomProvider.getInstalledVersionStack(STACK_GROUP, STACK_ARTIFACT));
+    }
 
-   @Test
-   public void testStackRepoFile() throws Exception
-   {
-      String repo = stacksUtil.getStacksRepo();
-      Assert.assertEquals("https://raw.github.com/jboss-jdf/jdf-stack/Beta2/stacks.yaml", repo);
-   }
+    @Test
+    public void testStackRepoFile() throws Exception {
+        String repo = stacksUtil.getStacksRepo();
+        Assert.assertEquals("https://raw.github.com/jboss-jdf/jdf-stack/Beta2/stacks.yaml", repo);
+    }
 }

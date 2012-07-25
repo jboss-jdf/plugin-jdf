@@ -28,61 +28,51 @@ import org.jboss.forge.shell.completer.CommandCompleterState;
 import org.jboss.forge.shell.completer.SimpleTokenCompleter;
 import org.jboss.jdf.plugins.stacks.Parser.Bom;
 
-public class StackVersionCompleter extends SimpleTokenCompleter
-{
+public class StackVersionCompleter extends SimpleTokenCompleter {
 
-   private CommandCompleterState state;
+    private CommandCompleterState state;
 
-   @Inject
-   private List<Bom> availableBoms;
+    @Inject
+    private List<Bom> availableBoms;
 
-   @Override
-   public Set<String> getCompletionTokens()
-   {
-      Set<String> versions = new TreeSet<String>();
-      String informedStack = getInformedStack();
-      Bom stack = getSelectedStack(informedStack);
-      if (stack != null)
-      {
-         versions.add(stack.getRecommendedVersion());
-         
-      }
-      return versions;
-   }
+    @Override
+    public Set<String> getCompletionTokens() {
+        Set<String> versions = new TreeSet<String>();
+        String informedStack = getInformedStack();
+        Bom stack = getSelectedStack(informedStack);
+        if (stack != null) {
+            versions.add(stack.getRecommendedVersion());
 
-   private Bom getSelectedStack(String informedStack)
-   {
-      for (Bom stack : availableBoms)
-      {
-         if (informedStack.equals(stack.getArtifactId()))
-         {
-            return stack;
-         }
-      }
-      return null;
-   }
+        }
+        return versions;
+    }
 
-   private String getInformedStack()
-   {
-      String completeCommand = state.getBuffer();
-      String[] splitedCommand = completeCommand.split("[\\s]++"); // split by one or more whitespaces
-      int cont = 0;
-      for (String token : splitedCommand)
-      {
-         cont++;
-         if (("--" + OPTION_STACK).equals(token))
-         {
-            break;
-         }
-      }
-      return splitedCommand[cont];
-   }
+    private Bom getSelectedStack(String informedStack) {
+        for (Bom stack : availableBoms) {
+            if (informedStack.equals(stack.getArtifactId())) {
+                return stack;
+            }
+        }
+        return null;
+    }
 
-   @Override
-   public void complete(CommandCompleterState state)
-   {
-      this.state = state;
-      super.complete(state);
-   }
+    private String getInformedStack() {
+        String completeCommand = state.getBuffer();
+        String[] splitedCommand = completeCommand.split("[\\s]++"); // split by one or more whitespaces
+        int cont = 0;
+        for (String token : splitedCommand) {
+            cont++;
+            if (("--" + OPTION_STACK).equals(token)) {
+                break;
+            }
+        }
+        return splitedCommand[cont];
+    }
+
+    @Override
+    public void complete(CommandCompleterState state) {
+        this.state = state;
+        super.complete(state);
+    }
 
 }
