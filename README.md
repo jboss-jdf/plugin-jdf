@@ -1,95 +1,65 @@
-plugin-jdf
-==========
-
-jdf plugin for Forge, that allows easy selection and use of JBoss BOMs
+JBoss Developer Framework plugin
 =======
 Author: Rafael Benevides
+
+To simplify selecting stacks using Forge.
 
 
 What is it?
 -----------
 
-This is a plugin for [JBoss Forge] (http://jboss.org/forge) to simplify the setup
-of a [JDF - JBoss Developer Framework] (http://www.jboss.org/jdf/) Stack 
+This is a plugin for [JBoss Forge](http://jboss.org/forge) to simplify the setup of a [JBoss Stack](http://www.jboss.org/jdf/stacks).
 
-The Stack is provided through the BOM concept. BOM is the abbreviation for Bill of Materials.
-More information about the BOM concept can be found at http://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html
-
-JDF provides some BOMs each one for each available Stack. 
-For more detailed information of each Stack you can take a look at: http://www.jboss.org/jdf/stack/jboss-bom/
-
-The purpose of this plugin is to help the developers to add a JDF Stack to a Project.
-
+The stack is provided by Maven BOMs (Bill of Materials); read more [about Maven BOMs](http://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html). JBoss Developer Framework provides a BOM for [every stack](http://www.jboss.org/jdf/stack/jboss-bom/).
 
 
 System requirements
 -------------------
 
-All you need is to use this plugin is JBoss Forge 1.0.5 (or latter) and
-an active Internet connection (at least for the first use of the plugin).
-
-
+All you need is to use this plugin is JBoss Forge 1.0.5 (or latter) and a working internet connection.
 
 
 Installing the plugin
 ---------------------
 
-Run forge console by typing
+Assuming Forge is running, at the Forge prompt, type:
 
-`forge` -- Linux  
-
-`forge.bat` -- Windows
-
-After in Forge prompt type  
-`$ forge install-plugin jdf `
-
+    forge install-plugin jdf
 
 
 Running the plugin
 -------------------
 
-OBS: If this is the first time that you use this plugin, you must be online.
+NOTE: The first time you use the plugin, you must have a working internet connection.
 
 In Forge console type:
-`jdf use-stack --stack [TAB]`
 
-this should connect to the JDF Stacks repository 
-(default to https://raw.github.com/jboss-jdf/jdf-stack/master/stacks.yaml)
-and retrieve the list of available JDF Stacks. 
+    jdf use-stack --stack
 
-The connection to the repository is made once a day. You can force the refresh of 
-the available stacks running the refresh-stacks command:
-`
-jdf refresh-stacks
-`
+and press _Tab_. This will load the list of available stacks from the JBoss Developer Framework Stacks repository (by default <https://raw.github.com/jboss-jdf/jdf-stack/master/stacks.yaml>). You can then select the stack to use.
 
-You can view the available stacks information running:
-`
-jdf show-stacks
-`
+Or you can also specify the version of the stack to use (by default, Forge will select the version currently recommended by JBoss Developer Framework):
 
-You can type the use-stack commmand:
-`
-jdf use-stack --stack jboss-javaee-6.0-with-errai
-`
+    jdf use-stack --stack jboss-javaee-6.0-with-errai --version 1.0.0.Final
 
-Or you can also type the complete command: 
-`
-jdf use-stack --stack jboss-javaee-6.0-with-errai --version 1.0.0.Final
-`
+You can add multiples stacks to your project, simply run the `jdf use-stack` command again.
 
+The list of available stacks is cached, and reloaded once a day. You can force a reload by running the `refresh-stacks` command:
 
-**You can add multiples stacks to your project**
+    jdf refresh-stacks
 
+You can also view the available stacks by running:
+
+    jdf show-stacks
 
 
 Custom Repository
 -----------------
 
-If for any reason you want to change the default repository location, you must configure the jdf settings in Forge
+If you want to change the default stack repository, then you will need to modify the Forge configuration.
 
-1. Open the user configuration in ~/.forge/config.xml (located in your home directory.) 
-2. Add the 'jdf' tag and required information inside the 'configuration' root tag:  
+1. Edit `~/.forge/config.xml` in your favourite editor
+2. Add the `<stacksRepo>` element, with the custom location, to the `<jdf>` element. For example:  
 
         <configuration> 
             ...
@@ -99,33 +69,26 @@ If for any reason you want to change the default repository location, you must c
             ... 
         </configuration> 
 
-**You must run jdf refresh-stacks to force the update of the repository information**
+3. Run `jdf refresh-stacks` to force an update of the repository information
 
 Proxy Configuration
 -------------------
-If your are accessing Internet through a proxy, you should configure Forge
-For more information take a look at https://docs.jboss.org/author/display/FORGE/Configure+HTTP+Proxy
-
-
+If you access the Internet through a proxy, you must [configure Forge](https://docs.jboss.org/author/display/FORGE/Configure+HTTP+Proxy).
 
 Offline use
 ------------
 
-If for any reason you can not be online, the plugin will use a previously stored
-cache file as source of available stacks.
+If you do not have a working internet connection, the plugin will use the cached list of available stacks.
 
-If you want to force the offline use, you can set the OFFLINE property typing:  
-`
-set OFFLINE true
-`
+You can force Forge to use the cached list of available stacks:  
 
+    set OFFLINE true
 
 
 Troubleshooting
 ---------------
 
-If you're experiencing some problems, you can turn on debug messages setting
-the VERBOSE property typing:   
-`
-set VERBOSE true
-`
+You can turn on debugging messages:   
+   
+   set VERBOSE true
+
