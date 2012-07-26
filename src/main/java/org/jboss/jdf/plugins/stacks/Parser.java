@@ -29,12 +29,11 @@ import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 
-
 /**
  * This a Parser for the JBoss Stacks YAML version Beta2
  * 
  * @author benevides@redhat.com
- *
+ * 
  */
 public class Parser {
 
@@ -44,6 +43,7 @@ public class Parser {
         TypeDescription stackDescription = new TypeDescription(Stacks.class);
         stackDescription.putListPropertyType("availableBoms", Bom.class);
         stackDescription.putListPropertyType("availableRuntimes", Runtime.class);
+        stackDescription.putListPropertyType("availableArchetypes", Archetype.class);
         stackDescription.putListPropertyType("minorReleases", MinorRelease.class);
         stackDescription.putListPropertyType("majorReleases", MajorRelease.class);
 
@@ -437,7 +437,7 @@ public class Parser {
             return availableVersions;
         }
 
-        void setAvailableVersions(List<String> availableVersions) {
+        public void setAvailableVersions(List<String> availableVersions) {
             this.availableVersions = availableVersions;
         }
 
@@ -445,10 +445,9 @@ public class Parser {
             return labels;
         }
 
-        void setLabels(List<String> labels) {
+        public void setLabels(List<String> labels) {
             this.labels = labels;
         }
-
     }
 
 }
