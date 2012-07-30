@@ -8,7 +8,7 @@ To simplify selecting stacks using Forge.
 What is it?
 -----------
 
-This is a plugin for [JBoss Forge](http://jboss.org/forge) to simplify the setup of a [JBoss Stack](http://www.jboss.org/jdf/stacks).
+This is a plugin for [JBoss Forge](http://jboss.org/forge) to simplify the setup of a [JBoss Stacks](http://www.jboss.org/jdf/stack/stacks).
 
 The stack is provided by Maven BOMs (Bill of Materials); read more [about Maven BOMs](http://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html). JBoss Developer Framework provides a BOM for [every stack](http://www.jboss.org/jdf/stack/jboss-bom/).
 
