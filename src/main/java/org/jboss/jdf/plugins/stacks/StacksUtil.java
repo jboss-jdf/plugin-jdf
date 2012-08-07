@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.enterprise.inject.Produces;
@@ -42,6 +43,7 @@ import org.jboss.forge.resources.FileResource;
 import org.jboss.forge.shell.Shell;
 import org.jboss.forge.shell.ShellMessages;
 import org.jboss.jdf.plugins.stacks.Parser.Bom;
+import org.jboss.jdf.plugins.stacks.Parser.BomVersion;
 
 /**
  * This is a Utility class that handle the available JDF Stacks from a repository using YAML
@@ -54,7 +56,7 @@ public class StacksUtil {
     private static final String BRANCH = "$BRANCH$";
     private static final String JDF_ELEMENT = "jdf";
     private static final String STACKSREPO_ELEMENT = "stacksRepo";
-    private static final String STACK_BRANCH = "Beta3";
+    private static final String STACK_BRANCH = "Beta4";
     // private static final String STACK_BRANCH = "master";
     private static final String DEFAULT_STACK_REPO = "https://raw.github.com/jboss-jdf/jdf-stack/" + BRANCH + "/stacks.yaml";
 
@@ -77,6 +79,37 @@ public class StacksUtil {
      */
     @Produces
     public List<Bom> retrieveAvailableBoms() {
+        InputStream inputStream = getStacksInputStream();
+        List<Bom> boms = new ArrayList<Parser.Bom>();
+        if (inputStream != null) {
+            boms.addAll(parser.parse(inputStream).getAvailableBoms());
+        }
+        return boms;
+    }
+
+    /**
+     * 
+     * Retrieve all bom versions
+     * 
+     * @param bom
+     * @return
+     */
+    public List<BomVersion> getAllVersions(Bom bom) {
+        InputStream inputStream = getStacksInputStream();
+        List<BomVersion> bomVersions = new ArrayList<BomVersion>();
+        if (inputStream != null) {
+            List<BomVersion> allVersions = parser.parse(inputStream).getAvailableBomVersions();
+            for(BomVersion bomVersion: allVersions){
+                //if version corresponds to the groupId and artifactId of the bom parameter
+                if (bomVersion.getBom().getGroupId().equals(bom.getGroupId()) && bomVersion.getBom().getArtifactId().equals(bom.getArtifactId())){
+                    bomVersions.add(bomVersion);
+                }
+            }
+        }
+        return bomVersions;
+    }
+
+    private InputStream getStacksInputStream() {
         String stacksRepo = getStacksRepo();
         InputStream repoStream = getCachedRepoStream(stacksRepo, environment.isOnline());
         // if cache expired
@@ -100,10 +133,13 @@ public class StacksUtil {
         if (repoStream == null) {
             ShellMessages.error(shell, "The Cache is empty. Try going online to get the list of available JDF Stacks!");
             return null;
+        } else {
+            return repoStream;
         }
-        List<Bom> stacks = parser.parse(repoStream).getAvailableBoms();
-        return stacks;
+    }
 
+    public List<BomVersion> getAvailableVersions(Bom bom) {
+        return null;
     }
 
     private void showVerboseMessage(String message) {

@@ -21,6 +21,7 @@
  */
 package org.jboss.jdf.plugins;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -38,6 +39,7 @@ import org.jboss.jdf.plugins.providers.JDFBOMProvider;
 import org.jboss.jdf.plugins.shell.AvailableStacksCompleter;
 import org.jboss.jdf.plugins.shell.StackVersionCompleter;
 import org.jboss.jdf.plugins.stacks.Parser.Bom;
+import org.jboss.jdf.plugins.stacks.Parser.BomVersion;
 import org.jboss.jdf.plugins.stacks.StacksUtil;
 
 /**
@@ -89,11 +91,12 @@ public class JDFPlugin implements Plugin {
             out.println("\tArtifactId: " + stack.getArtifactId());
             out.println("\tGroupId: " + stack.getGroupId());
             out.println("\tRecommended Version: " + out.renderColor(ShellColor.GREEN, stack.getRecommendedVersion()));
-            if (stack.getAvailableVersions().size() > 0) {
+            List<BomVersion> bomVersions = stacksUtil.getAllVersions(stack);
+            if (bomVersions.size() > 0) {
                 out.println("\tAvailable Versions:");
             }
-            for (String availableVersion : stack.getAvailableVersions()) {
-                out.println(ShellColor.BLUE, "\t\t - " + availableVersion);
+            for (BomVersion availableVersion : bomVersions) {
+                out.println(ShellColor.BLUE, "\t\t - " + availableVersion.getVersion());
             }
             out.println();
         }
@@ -119,8 +122,13 @@ public class JDFPlugin implements Plugin {
      */
     private String chooseVersion(Bom selectedStack, String version) {
         if (selectedStack != null && version == null) {
-            return shellPrompt.promptChoiceTyped("Whice version of stack " + selectedStack,
-                    selectedStack.getAvailableVersions(), selectedStack.getRecommendedVersion());
+            List<BomVersion> bomVersions = stacksUtil.getAllVersions(selectedStack);
+            List<String> versions = new ArrayList<String>();
+            for (BomVersion bomVersion : bomVersions) {
+                versions.add(bomVersion.getVersion());
+            }
+            return shellPrompt.promptChoiceTyped("Which version of stack " + selectedStack, versions,
+                    selectedStack.getRecommendedVersion());
         }
         return version;
     }
@@ -190,19 +198,24 @@ public class JDFPlugin implements Plugin {
      * The version must be one of the available versions of the stack.
      * 
      * @param selectedStack
-     * @param stack
+     * @param informedStack
      * @param version
      * @param out
      * @return true if has any invalid input
      */
-    private boolean isInvalidInput(Bom selectedStack, String stack, String version, PipeOut out) {
+    private boolean isInvalidInput(Bom selectedStack, String informedStack, String version, PipeOut out) {
         if (selectedStack == null) {
-            ShellMessages.error(out, "There is no stack [" + stack + "]. Try one of those: " + availableBoms);
+            ShellMessages.error(out, "There is no stack [" + informedStack + "]. Try one of those: " + availableBoms);
             return true;
         }
-        if (!selectedStack.getAvailableVersions().contains(version)) {
+        List<BomVersion> bomVersions = stacksUtil.getAllVersions(selectedStack);
+        List<String> versions = new ArrayList<String>();
+        for (BomVersion bomVersion : bomVersions) {
+            versions.add(bomVersion.getVersion());
+        }
+        if (!versions.contains(version)) {
             ShellMessages.error(out, "There is no version [" + version + "] for this stack [" + selectedStack
-                    + "]. Try one of those: " + selectedStack.getAvailableVersions());
+                    + "]. Try one of those: " + versions);
             return true;
         }
         return false;
