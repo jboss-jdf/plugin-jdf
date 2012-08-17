@@ -7,7 +7,7 @@
 	<artifactId>jdf-plugin</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 	<properties>
-		<forge.api.version>1.0.5.Final</forge.api.version>
+		<forge.api.version>1.0.6.Final</forge.api.version>
 		<httpclient.version>4.0.1</httpclient.version>
 		<yaml.version>1.10</yaml.version>
 	</properties>
