@@ -112,6 +112,6 @@ public class JdfPluginTest extends AbstractShellTest {
     @Test
     public void testStackRepoFile() throws Exception {
         String repo = stacksUtil.getStacksRepo();
-        Assert.assertEquals("https://raw.github.com/jboss-jdf/jdf-stack/Beta2/stacks.yaml", repo);
+        Assert.assertEquals("https://raw.github.com/jboss-jdf/jdf-stack/Beta5/stacks.yaml", repo);
     }
 }

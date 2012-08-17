@@ -56,7 +56,7 @@ public class StacksUtil {
     private static final String BRANCH = "$BRANCH$";
     private static final String JDF_ELEMENT = "jdf";
     private static final String STACKSREPO_ELEMENT = "stacksRepo";
-    private static final String STACK_BRANCH = "Beta4";
+    private static final String STACK_BRANCH = "Beta5";
     // private static final String STACK_BRANCH = "master";
     private static final String DEFAULT_STACK_REPO = "https://raw.github.com/jboss-jdf/jdf-stack/" + BRANCH + "/stacks.yaml";
 
