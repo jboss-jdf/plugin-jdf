@@ -26,7 +26,7 @@ import javax.inject.Inject;
 
 import org.jboss.forge.shell.completer.CommandCompleterState;
 import org.jboss.forge.shell.completer.SimpleTokenCompleter;
-import org.jboss.jdf.plugins.stacks.Parser.Bom;
+import org.jboss.jdf.stacks.model.Bom;
 
 public class StackVersionCompleter extends SimpleTokenCompleter {
 

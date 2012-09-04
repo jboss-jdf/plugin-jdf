@@ -31,8 +31,9 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.forge.test.AbstractShellTest;
 import org.jboss.jdf.plugins.JDFPlugin;
 import org.jboss.jdf.plugins.providers.JDFBOMProvider;
-import org.jboss.jdf.plugins.stacks.Parser.Bom;
+import org.jboss.jdf.plugins.stacks.ForgeStacksClientConfiguration;
 import org.jboss.jdf.plugins.stacks.StacksUtil;
+import org.jboss.jdf.stacks.model.Bom;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.Before;
 import org.junit.Test;
@@ -81,7 +82,7 @@ public class JdfPluginTest extends AbstractShellTest {
     @Test
     public void testAvailableStacks() throws Exception {
         List<Bom> availableStacks = stacksUtil.retrieveAvailableBoms();
-        Assert.assertTrue(availableStacks.size() == 6);
+        Assert.assertTrue(availableStacks.size() == 7);
     }
 
     @Test
@@ -111,7 +112,7 @@ public class JdfPluginTest extends AbstractShellTest {
 
     @Test
     public void testStackRepoFile() throws Exception {
-        String repo = stacksUtil.getStacksRepo();
-        Assert.assertEquals("https://raw.github.com/jboss-jdf/jdf-stack/Beta5/stacks.yaml", repo);
+        String repo = new ForgeStacksClientConfiguration().getUrl().toString();
+        Assert.assertEquals("https://raw.github.com/jboss-jdf/jdf-stack/Beta6/stacks.yaml", repo);
     }
 }

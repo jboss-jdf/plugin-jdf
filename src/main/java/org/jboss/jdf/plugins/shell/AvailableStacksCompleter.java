@@ -21,7 +21,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 import org.jboss.forge.shell.completer.SimpleTokenCompleter;
-import org.jboss.jdf.plugins.stacks.Parser.Bom;
+import org.jboss.jdf.stacks.model.Bom;
 
 /**
  * Return the list of stack boms

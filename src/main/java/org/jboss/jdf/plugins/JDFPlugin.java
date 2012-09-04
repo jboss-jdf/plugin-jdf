@@ -38,9 +38,12 @@ import org.jboss.forge.shell.plugins.RequiresProject;
 import org.jboss.jdf.plugins.providers.JDFBOMProvider;
 import org.jboss.jdf.plugins.shell.AvailableStacksCompleter;
 import org.jboss.jdf.plugins.shell.StackVersionCompleter;
-import org.jboss.jdf.plugins.stacks.Parser.Bom;
-import org.jboss.jdf.plugins.stacks.Parser.BomVersion;
+import org.jboss.jdf.plugins.stacks.ForgeStacksClientConfiguration;
+import org.jboss.jdf.plugins.stacks.ForgeStacksMessages;
 import org.jboss.jdf.plugins.stacks.StacksUtil;
+import org.jboss.jdf.stacks.client.StacksClient;
+import org.jboss.jdf.stacks.model.Bom;
+import org.jboss.jdf.stacks.model.BomVersion;
 
 /**
  * The JDF Plugin itself
@@ -51,6 +54,13 @@ import org.jboss.jdf.plugins.stacks.StacksUtil;
 @RequiresProject
 public class JDFPlugin implements Plugin {
     public static final String OPTION_STACK = "stack";
+    
+    @Inject
+    private ForgeStacksClientConfiguration stacksClientConfiguration;
+
+    @Inject
+    private ForgeStacksMessages stacksMessages;
+
 
     @Inject
     private List<Bom> availableBoms;
@@ -105,11 +115,11 @@ public class JDFPlugin implements Plugin {
     @Command(value = "refresh-stacks", help = "Force the update of the Stacks. It is updated automatically once a day")
     public void refreshStacks(PipeOut out) {
         // Destroying the cache, forces it to be updated
-        stacksUtil.eraseRepositoryCache();
+        new StacksClient(stacksClientConfiguration, stacksMessages).eraseRepositoryCache();
         // Force the update
         List<Bom> stacks = stacksUtil.retrieveAvailableBoms();
         if (stacks != null) {
-            ShellMessages.success(out, "Stacks updated from the following repository: " + stacksUtil.getStacksRepo());
+            ShellMessages.success(out, "Stacks updated from the following repository: " + stacksClientConfiguration.getUrl());
         }
     }
 
