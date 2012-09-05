@@ -54,13 +54,12 @@ import org.jboss.jdf.stacks.model.BomVersion;
 @RequiresProject
 public class JDFPlugin implements Plugin {
     public static final String OPTION_STACK = "stack";
-    
+
     @Inject
     private ForgeStacksClientConfiguration stacksClientConfiguration;
 
     @Inject
     private ForgeStacksMessages stacksMessages;
-
 
     @Inject
     private List<Bom> availableBoms;
@@ -75,21 +74,21 @@ public class JDFPlugin implements Plugin {
     private StacksUtil stacksUtil;
 
     @Command(value = "use-stack", help = "Enable JDF JBoss Stack in to a Project")
-    public void installStack(
-            @Option(name = OPTION_STACK, required = true, completer = AvailableStacksCompleter.class, description = "Stack Id") String stack,
+    public void useStack(
+            @Option(name = OPTION_STACK, required = true, completer = AvailableStacksCompleter.class, description = "Stack Id") String bomId,
             @Option(name = "version", required = false, completer = StackVersionCompleter.class, description = "Recommended JDF Stack Version") String version,
             PipeOut out) {
-        Bom selectedStack = getSelectedStack(stack);
-        String chosenVersion = chooseVersion(selectedStack, version);
+        Bom selectedBom = getSelectedBom(bomId);
+        String chosenVersion = chooseVersion(selectedBom, version);
         // validate input
-        if (isInvalidInput(selectedStack, stack, chosenVersion, out)) {
+        if (isInvalidInput(selectedBom, bomId, chosenVersion, out)) {
             return;
         }
 
-        if (bomProvider.isDependencyManagementInstalled(selectedStack.getGroupId(), selectedStack.getArtifactId())) {
-            handleStackAlreadyInstaled(selectedStack, chosenVersion, out);
+        if (bomProvider.isDependencyManagementInstalled(selectedBom.getGroupId(), selectedBom.getArtifactId())) {
+            handleStackAlreadyInstaled(selectedBom, chosenVersion, out);
         } else {
-            handleStackInstalation(selectedStack, chosenVersion, out);
+            handleStackInstalation(selectedBom, chosenVersion, out);
         }
     }
 
@@ -126,19 +125,19 @@ public class JDFPlugin implements Plugin {
     /**
      * Permits the user choose on of the available versions of the informed stack.
      * 
-     * @param selectedStack
+     * @param selectedBom
      * @param version if null, user must chose one version of the selectedStack
      * @return the chosen version
      */
-    private String chooseVersion(Bom selectedStack, String version) {
-        if (selectedStack != null && version == null) {
-            List<BomVersion> bomVersions = stacksUtil.getAllVersions(selectedStack);
+    private String chooseVersion(Bom selectedBom, String version) {
+        if (selectedBom != null && version == null) {
+            List<BomVersion> bomVersions = stacksUtil.getAllVersions(selectedBom);
             List<String> versions = new ArrayList<String>();
             for (BomVersion bomVersion : bomVersions) {
                 versions.add(bomVersion.getVersion());
             }
-            return shellPrompt.promptChoiceTyped("Which version of stack " + selectedStack, versions,
-                    selectedStack.getRecommendedVersion());
+            return shellPrompt.promptChoiceTyped("Which version of stack " + selectedBom, versions,
+                    selectedBom.getRecommendedVersion());
         }
         return version;
     }
@@ -188,7 +187,7 @@ public class JDFPlugin implements Plugin {
         // If <> installed stack version
         if (!previousStackVersion.equals(version)) {
             ShellMessages.warn(out, " Another version of this stack is installed: " + previousStackVersion);
-            boolean shouldUpdate = shellPrompt.promptBoolean("Do you want to update this Stack version to: " + version + " ?",
+            boolean shouldUpdate = shellPrompt.promptBoolean("Do you want to change this Stack version to: " + version + " ?",
                     false);
             if (shouldUpdate) {
                 bomProvider.removeBom(selectedStack.getGroupId(), selectedStack.getArtifactId(), previousStackVersion);
@@ -207,24 +206,28 @@ public class JDFPlugin implements Plugin {
      * 
      * The version must be one of the available versions of the stack.
      * 
-     * @param selectedStack
-     * @param informedStack
+     * @param selectedBom
+     * @param informedBomId
      * @param version
      * @param out
      * @return true if has any invalid input
      */
-    private boolean isInvalidInput(Bom selectedStack, String informedStack, String version, PipeOut out) {
-        if (selectedStack == null) {
-            ShellMessages.error(out, "There is no stack [" + informedStack + "]. Try one of those: " + availableBoms);
+    private boolean isInvalidInput(Bom selectedBom, String informedBomId, String version, PipeOut out) {
+        if (selectedBom == null) {
+            List<String> bomIds = new ArrayList<String>();
+            for (Bom bom : availableBoms) {
+                bomIds.add(bom.getId());
+            }
+            ShellMessages.error(out, "There is no bom [" + informedBomId + "]. Try one of those: " + bomIds);
             return true;
         }
-        List<BomVersion> bomVersions = stacksUtil.getAllVersions(selectedStack);
+        List<BomVersion> bomVersions = stacksUtil.getAllVersions(selectedBom);
         List<String> versions = new ArrayList<String>();
         for (BomVersion bomVersion : bomVersions) {
             versions.add(bomVersion.getVersion());
         }
         if (!versions.contains(version)) {
-            ShellMessages.error(out, "There is no version [" + version + "] for this stack [" + selectedStack
+            ShellMessages.error(out, "There is no version [" + version + "] for this stack [" + selectedBom
                     + "]. Try one of those: " + versions);
             return true;
         }
@@ -233,15 +236,15 @@ public class JDFPlugin implements Plugin {
     }
 
     /**
-     * Finds the stack object based on its id
+     * Finds the bom object based on its id
      * 
-     * @param informedStack the stack id
+     * @param informedBom the stack id
      * @return stack
      */
-    private Bom getSelectedStack(String informedStack) {
-        for (Bom stack : availableBoms) {
-            if (stack.getArtifactId().equals(informedStack)) {
-                return stack;
+    private Bom getSelectedBom(String informedBom) {
+        for (Bom bom : availableBoms) {
+            if (bom.getId().equals(informedBom)) {
+                return bom;
             }
         }
         return null;

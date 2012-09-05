@@ -22,8 +22,11 @@
 
 package org.jboss.jdf.plugins.stacks;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Properties;
 
 import javax.inject.Inject;
 
@@ -47,6 +50,24 @@ public class ForgeStacksClientConfiguration implements StacksClientConfiguration
     @Inject
     private ForgeEnvironment environment;
 
+    /**
+     * @return
+     * @throws IOException
+     */
+    private String getDefaultRepo() throws IOException {
+        InputStream is = null;
+        try {
+            is = this.getClass().getResourceAsStream("/org/jboss/jdf/stacks/client/config.properties");
+            Properties p = new Properties();
+            p.load(is);
+            return p.getProperty(REPO_PROPERTY);
+        } finally {
+            if (is != null) {
+                is.close();
+            }
+        }
+    }
+
     /*
      * (non-Javadoc)
      * 
@@ -54,18 +75,21 @@ public class ForgeStacksClientConfiguration implements StacksClientConfiguration
      */
     @Override
     public URL getUrl() {
-        Configuration userConfig = configuration.getScopedConfiguration(ConfigurationScope.USER);
-        verifyIfNeedConfigurationReset(userConfig);
-        Configuration jdfConfig = userConfig.subset(JDF_ELEMENT);
-        String stacksRepo = jdfConfig.getString(STACKSREPO_ELEMENT);
+        String stacksRepo = null;
         try {
+            Configuration userConfig = configuration.getScopedConfiguration(ConfigurationScope.USER);
+            verifyIfNeedConfigurationReset(userConfig);
+            Configuration jdfConfig = userConfig.subset(JDF_ELEMENT);
+            stacksRepo = jdfConfig.getString(STACKSREPO_ELEMENT);
             if (stacksRepo == null) {
-                return new URL(DEFAULT_STACKS_REPO);
+                return new URL(getDefaultRepo());
             } else {
                 return new URL(stacksRepo);
             }
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException("Wrong repository URL " + stacksRepo);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Error reading default value from stacks client embed config file ", e);
         }
     }
 
@@ -75,15 +99,17 @@ public class ForgeStacksClientConfiguration implements StacksClientConfiguration
      * 
      * @param userConfig
      * @param defaultUrl
+     * @throws IOException
      */
-    private void verifyIfNeedConfigurationReset(Configuration userConfig) {
+    private void verifyIfNeedConfigurationReset(Configuration userConfig) throws IOException {
         Configuration jdfConfig = userConfig.subset(JDF_ELEMENT);
-        String defaultRepoPrefix = DEFAULT_STACKS_REPO.substring(0, DEFAULT_STACKS_REPO.lastIndexOf("jdf-stack/"));
+        String defaultRepo = getDefaultRepo();
+        String defaultRepoPrefix = defaultRepo.substring(0, defaultRepo.lastIndexOf("jdf-stack/"));
         String configRepo = jdfConfig.getString(STACKSREPO_ELEMENT);
         // If config uses the official
         if (configRepo.startsWith(defaultRepoPrefix)) {
             // silently update the configuration
-            userConfig.setProperty(JDF_ELEMENT + "." + STACKSREPO_ELEMENT, DEFAULT_STACKS_REPO);
+            userConfig.setProperty(JDF_ELEMENT + "." + STACKSREPO_ELEMENT, defaultRepo);
         }
     }
 

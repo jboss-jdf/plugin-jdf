@@ -50,6 +50,9 @@ public class JdfPluginTest extends AbstractShellTest {
     @Inject
     private StacksUtil stacksUtil;
 
+    @Inject
+    private ForgeStacksClientConfiguration forgeStacksClientConfiguration;
+
     @Before
     public void setup() throws Exception {
         initializeJavaProject();
@@ -112,7 +115,7 @@ public class JdfPluginTest extends AbstractShellTest {
 
     @Test
     public void testStackRepoFile() throws Exception {
-        String repo = new ForgeStacksClientConfiguration().getUrl().toString();
-        Assert.assertEquals("https://raw.github.com/jboss-jdf/jdf-stack/Beta6/stacks.yaml", repo);
+        String repo = forgeStacksClientConfiguration.getUrl().toString();
+        Assert.assertEquals("https://raw.github.com/jboss-jdf/jdf-stack/1.0.0.CR1/stacks.yaml", repo);
     }
 }

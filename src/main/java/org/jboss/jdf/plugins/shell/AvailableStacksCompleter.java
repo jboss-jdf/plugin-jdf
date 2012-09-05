@@ -16,6 +16,7 @@
  */
 package org.jboss.jdf.plugins.shell;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -35,8 +36,12 @@ public class AvailableStacksCompleter extends SimpleTokenCompleter {
     private List<Bom> availableBoms;
 
     @Override
-    public Iterable<?> getCompletionTokens() {
-        return availableBoms;
+    public Iterable<String> getCompletionTokens() {
+        List<String> bomIds = new ArrayList<String>();
+        for (Bom bom : availableBoms) {
+            bomIds.add(bom.getId());
+        }
+        return bomIds;
     }
 
 }
