@@ -10,7 +10,7 @@
         <forge.api.version>1.0.6.Final</forge.api.version>
         <httpclient.version>4.0.1</httpclient.version>
         <yaml.version>1.10</yaml.version>
-        <stacks-client.version>1.0.0.CR1</stacks-client.version>
+        <stacks-client.version>1.0.0.CR4</stacks-client.version>
     </properties>
     <dependencyManagement>
         <dependencies>

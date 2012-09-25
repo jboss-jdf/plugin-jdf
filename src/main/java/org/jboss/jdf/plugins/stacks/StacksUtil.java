@@ -22,7 +22,6 @@ import java.util.List;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
-import org.jboss.forge.shell.Shell;
 import org.jboss.jdf.stacks.client.StacksClient;
 import org.jboss.jdf.stacks.model.Bom;
 import org.jboss.jdf.stacks.model.BomVersion;
@@ -34,9 +33,6 @@ import org.jboss.jdf.stacks.model.BomVersion;
  * 
  */
 public class StacksUtil {
-
-    @Inject
-    private Shell shell;
 
     @Inject
     private ForgeStacksClientConfiguration stacksClientConfiguration;
