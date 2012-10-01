@@ -36,14 +36,15 @@ import org.jboss.forge.shell.plugins.PipeOut;
 import org.jboss.forge.shell.plugins.Plugin;
 import org.jboss.forge.shell.plugins.RequiresProject;
 import org.jboss.jdf.plugins.providers.JDFBOMProvider;
-import org.jboss.jdf.plugins.shell.AvailableStacksCompleter;
-import org.jboss.jdf.plugins.shell.StackVersionCompleter;
+import org.jboss.jdf.plugins.shell.AvailableRuntimesCompleter;
+import org.jboss.jdf.plugins.shell.BomVersionsCompleter;
 import org.jboss.jdf.plugins.stacks.ForgeStacksClientConfiguration;
 import org.jboss.jdf.plugins.stacks.ForgeStacksMessages;
 import org.jboss.jdf.plugins.stacks.StacksUtil;
 import org.jboss.jdf.stacks.client.StacksClient;
 import org.jboss.jdf.stacks.model.Bom;
 import org.jboss.jdf.stacks.model.BomVersion;
+import org.jboss.jdf.stacks.model.Runtime;
 
 /**
  * The JDF Plugin itself
@@ -53,7 +54,10 @@ import org.jboss.jdf.stacks.model.BomVersion;
 @Alias("jdf")
 @RequiresProject
 public class JDFPlugin implements Plugin {
-    public static final String OPTION_STACK = "stack";
+
+    public static final String OPTION_BOM = "bom";
+
+    public static final String OPTION_RUNTIME = "runtime";
 
     @Inject
     private ForgeStacksClientConfiguration stacksClientConfiguration;
@@ -63,6 +67,12 @@ public class JDFPlugin implements Plugin {
 
     @Inject
     private List<Bom> availableBoms;
+
+    @Inject
+    private List<Runtime> availableRuntimes;
+
+    @Inject
+    private List<BomVersion> availableBomVersions;
 
     @Inject
     private JDFBOMProvider bomProvider;
@@ -75,32 +85,40 @@ public class JDFPlugin implements Plugin {
 
     @Command(value = "use-stack", help = "Enable JDF JBoss Stack in to a Project")
     public void useStack(
-            @Option(name = OPTION_STACK, required = true, completer = AvailableStacksCompleter.class, description = "Stack Id") String bomId,
-            @Option(name = "version", required = false, completer = StackVersionCompleter.class, description = "Recommended JDF Stack Version") String version,
+            @Option(name = OPTION_RUNTIME, required = true, completer = AvailableRuntimesCompleter.class, description = "Runtime id") String runtimeId,
+            @Option(name = OPTION_BOM, required = true, completer = BomVersionsCompleter.class, description = "Bom Version Id") String bomVersionId,
             PipeOut out) {
-        Bom selectedBom = getSelectedBom(bomId);
-        String chosenVersion = chooseVersion(selectedBom, version);
+        Runtime selectedRuntime = getSelectedRuntime(runtimeId);
+        BomVersion selectedBomVersion = getSelectedBomVersion(bomVersionId);
         // validate input
-        if (isInvalidInput(selectedBom, bomId, chosenVersion, out)) {
+        if (isInvalidInput(runtimeId, selectedRuntime, bomVersionId, selectedBomVersion, out)) {
             return;
         }
 
-        if (bomProvider.isDependencyManagementInstalled(selectedBom.getGroupId(), selectedBom.getArtifactId())) {
-            handleStackAlreadyInstaled(selectedBom, chosenVersion, out);
+        if (bomProvider.isDependencyManagementInstalled(selectedBomVersion.getBom().getGroupId(), selectedBomVersion.getBom()
+                .getArtifactId())) {
+            handleStackAlreadyInstaled(selectedBomVersion, out);
         } else {
-            handleStackInstalation(selectedBom, chosenVersion, out);
+            handleStackInstalation(selectedBomVersion, out);
         }
     }
 
-    @Command(value = "show-stacks", help = "List the available stacks")
-    public void listStacks(PipeOut out) {
-        for (Bom stack : availableBoms) {
-            out.println(" - " + out.renderColor(ShellColor.BOLD, stack.getArtifactId()) + " (" + stack.getName() + ")");
-            out.println("\tDescription: " + stack.getDescription());
-            out.println("\tArtifactId: " + stack.getArtifactId());
-            out.println("\tGroupId: " + stack.getGroupId());
-            out.println("\tRecommended Version: " + out.renderColor(ShellColor.GREEN, stack.getRecommendedVersion()));
-            List<BomVersion> bomVersions = stacksUtil.getAllVersions(stack);
+    @Command(value = "show-boms", help = "List the available BOMs")
+    public void listBoms(PipeOut out) {
+        for (Bom bom : availableBoms) {
+            out.println(" - " + out.renderColor(ShellColor.BOLD, bom.getArtifactId()) + " (" + bom.getName() + ")");
+            out.println("\tDescription: " + bom.getDescription());
+            out.println("\tArtifactId: " + bom.getArtifactId());
+            out.println("\tGroupId: " + bom.getGroupId());
+            out.println("\tRecommended Version: " + out.renderColor(ShellColor.GREEN, bom.getRecommendedVersion()));
+            List<BomVersion> bomVersions = new ArrayList<BomVersion>();
+            for (BomVersion bomVersion : availableBomVersions) {
+                // if version corresponds to the groupId and artifactId of the bom parameter
+                if (bomVersion.getBom().getGroupId().equals(bom.getGroupId())
+                        && bomVersion.getBom().getArtifactId().equals(bom.getArtifactId())) {
+                    bomVersions.add(bomVersion);
+                }
+            }
             if (bomVersions.size() > 0) {
                 out.println("\tAvailable Versions:");
             }
@@ -111,65 +129,45 @@ public class JDFPlugin implements Plugin {
         }
     }
 
+    @Command(value = "show-runtimes", help = "List the available Runtimes")
+    public void listRuntimes(PipeOut out) {
+        for (Runtime runtime : availableRuntimes) {
+            out.println(" - " + out.renderColor(ShellColor.BOLD, runtime.getId()) + " (" + runtime.getName() + " - "
+                    + runtime.getVersion() + ") ");
+            out.println("\tBOMs:");
+            for (BomVersion bomVersion : runtime.getBoms()) {
+                out.print(ShellColor.BLUE, "\t\t - " + bomVersion.getId());
+                out.println(" (" + bomVersion.getBom().getName() + " - " + bomVersion.getVersion() + ")");
+            }
+            out.print("\tDefault BOM: " + out.renderColor(ShellColor.GREEN, runtime.getDefaultBom().getId()));
+            out.println(" (" + runtime.getDefaultBom().getBom().getName() + " - " + runtime.getDefaultBom().getVersion() + ")");
+            out.println();
+        }
+    }
+
     @Command(value = "refresh-stacks", help = "Force the update of the Stacks. It is updated automatically once a day")
     public void refreshStacks(PipeOut out) {
         // Destroying the cache, forces it to be updated
         new StacksClient(stacksClientConfiguration, stacksMessages).eraseRepositoryCache();
         // Force the update
-        List<Bom> stacks = stacksUtil.retrieveAvailableBoms();
-        if (stacks != null) {
+        List<Runtime> runtimes = stacksUtil.retrieveAvailableRuntimes();
+        if (runtimes != null) {
             ShellMessages.success(out, "Stacks updated from the following repository: " + stacksClientConfiguration.getUrl());
         }
     }
 
     /**
-     * Permits the user choose on of the available versions of the informed stack.
-     * 
-     * @param selectedBom
-     * @param version if null, user must chose one version of the selectedStack
-     * @return the chosen version
-     */
-    private String chooseVersion(Bom selectedBom, String version) {
-        if (selectedBom != null && version == null) {
-            List<BomVersion> bomVersions = stacksUtil.getAllVersions(selectedBom);
-            List<String> versions = new ArrayList<String>();
-            for (BomVersion bomVersion : bomVersions) {
-                versions.add(bomVersion.getVersion());
-            }
-            return shellPrompt.promptChoiceTyped("Which version of stack " + selectedBom, versions,
-                    selectedBom.getRecommendedVersion());
-        }
-        return version;
-    }
-
-    /**
      * Interacts with the user in a Stack Installation
      * 
-     * @param selectedStack
-     * @param version
-     * @param out
-     */
-    private void handleStackInstalation(Bom selectedStack, String version, PipeOut out) {
-        if (!selectedStack.getRecommendedVersion().equals(version)) {
-            boolean installNotRecommended = shellPrompt.promptBoolean(
-                    "You didn't choose the recommended version. Do you want continue the installation?", false);
-            if (!installNotRecommended) {
-                return;
-            }
-        }
-        addStack(selectedStack, version, out);
-    }
-
-    /**
-     * Add a Stack (almost) without user interaction
+     * @param selectedRuntime
      * 
      * @param selectedStack
      * @param version
      * @param out
      */
-    private void addStack(Bom selectedStack, String version, PipeOut out) {
-        bomProvider.installBom(selectedStack.getGroupId(), selectedStack.getArtifactId(), version);
-        ShellMessages.success(out, "Stack " + selectedStack.getName() + " version " + version + " installed!");
+    private void handleStackInstalation(BomVersion bomVersion, PipeOut out) {
+        bomProvider.installBom(bomVersion.getBom().getGroupId(), bomVersion.getBom().getArtifactId(), bomVersion.getVersion());
+        ShellMessages.success(out, "Stack " + bomVersion.getId() + "  installed!");
     }
 
     /**
@@ -180,20 +178,19 @@ public class JDFPlugin implements Plugin {
      * @param version
      * @param out
      */
-    private void handleStackAlreadyInstaled(Bom selectedStack, String version, PipeOut out) {
-        String previousStackVersion = bomProvider.getInstalledVersionStack(selectedStack.getGroupId(),
-                selectedStack.getArtifactId());
-        ShellMessages.info(out, "Stack " + selectedStack.getName() + " already installed");
+    private void handleStackAlreadyInstaled(BomVersion bomVersion, PipeOut out) {
+        String previousStackVersion = bomProvider.getInstalledVersionStack(bomVersion.getBom().getGroupId(), bomVersion
+                .getBom().getArtifactId());
+        ShellMessages.info(out, "BOM " + bomVersion.getId() + " already installed");
         // If <> installed stack version
-        if (!previousStackVersion.equals(version)) {
-            ShellMessages.warn(out, " Another version of this stack is installed: " + previousStackVersion);
-            boolean shouldUpdate = shellPrompt.promptBoolean("Do you want to change this Stack version to: " + version + " ?",
-                    false);
+        if (!previousStackVersion.equals(bomVersion.getVersion())) {
+            ShellMessages.warn(out, " Another version of this bom is installed: " + previousStackVersion);
+            boolean shouldUpdate = shellPrompt.promptBoolean(
+                    "Do you want to change this BOM version to: " + bomVersion.getVersion() + " ?", false);
             if (shouldUpdate) {
-                bomProvider.removeBom(selectedStack.getGroupId(), selectedStack.getArtifactId(), previousStackVersion);
-                // For an atomic update, adding stack has no user interaction if the new version is not one of the
-                // recommended. So addStack() is called instead of handleStackInstalation()
-                addStack(selectedStack, version, out);
+                bomProvider.removeBom(bomVersion.getBom().getGroupId(), bomVersion.getBom().getArtifactId(),
+                        previousStackVersion);
+                handleStackInstalation(bomVersion, out);
             }
         }
         out.println();
@@ -206,45 +203,67 @@ public class JDFPlugin implements Plugin {
      * 
      * The version must be one of the available versions of the stack.
      * 
+     * @param bomVersionId
+     * @param runtimeId
+     * 
      * @param selectedBom
      * @param informedBomId
      * @param version
      * @param out
      * @return true if has any invalid input
      */
-    private boolean isInvalidInput(Bom selectedBom, String informedBomId, String version, PipeOut out) {
-        if (selectedBom == null) {
-            List<String> bomIds = new ArrayList<String>();
-            for (Bom bom : availableBoms) {
-                bomIds.add(bom.getId());
+    private boolean isInvalidInput(String runtimeId, Runtime selectedRuntime, String bomVersionId,
+            BomVersion selectedBomVersion, PipeOut out) {
+        if (selectedRuntime == null) {
+            ShellMessages.error(out, "There is no Runtime [" + runtimeId + "]. Try one of those: ");
+            for (Runtime runtime : availableRuntimes) {
+                out.println(runtime.getId());
             }
-            ShellMessages.error(out, "There is no bom [" + informedBomId + "]. Try one of those: " + bomIds);
             return true;
         }
-        List<BomVersion> bomVersions = stacksUtil.getAllVersions(selectedBom);
-        List<String> versions = new ArrayList<String>();
-        for (BomVersion bomVersion : bomVersions) {
-            versions.add(bomVersion.getVersion());
+        if (selectedBomVersion == null) {
+            ShellMessages.error(out, "There is no BOM version [" + bomVersionId + "]. Try one of those: ");
+            for (BomVersion bomVersion : availableBomVersions) {
+                out.println(bomVersion.getId());
+            }
+            return true;
         }
-        if (!versions.contains(version)) {
-            ShellMessages.error(out, "There is no version [" + version + "] for this stack [" + selectedBom
-                    + "]. Try one of those: " + versions);
+        if (!selectedRuntime.getBoms().contains(selectedBomVersion)) {
+            ShellMessages.error(out, "There is no BOM version [" + bomVersionId + "] for this Runtime [" + runtimeId
+                    + "]. Try one of those: ");
+            for (BomVersion bomVersion : selectedRuntime.getBoms()) {
+                out.println(bomVersion.getId());
+            }
             return true;
         }
         return false;
-
     }
 
     /**
-     * Finds the bom object based on its id
+     * Finds the runtime object based on its id
      * 
-     * @param informedBom the stack id
-     * @return stack
+     * @param runtimeId the runtime id
+     * @return runtime
      */
-    private Bom getSelectedBom(String informedBom) {
-        for (Bom bom : availableBoms) {
-            if (bom.getId().equals(informedBom)) {
-                return bom;
+    private Runtime getSelectedRuntime(String runtimeId) {
+        for (Runtime runtime : availableRuntimes) {
+            if (runtime.getId().equals(runtimeId)) {
+                return runtime;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Finds the Bom Version object based on its id
+     * 
+     * @param runtimeId the runtime id
+     * @return runtime
+     */
+    private BomVersion getSelectedBomVersion(String bomVersionId) {
+        for (BomVersion bomVersion : availableBomVersions) {
+            if (bomVersion.getId().equals(bomVersionId)) {
+                return bomVersion;
             }
         }
         return null;

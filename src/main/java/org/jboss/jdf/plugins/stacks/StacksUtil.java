@@ -16,15 +16,16 @@
  */
 package org.jboss.jdf.plugins.stacks;
 
-import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
 import org.jboss.jdf.stacks.client.StacksClient;
 import org.jboss.jdf.stacks.model.Bom;
 import org.jboss.jdf.stacks.model.BomVersion;
+import org.jboss.jdf.stacks.model.Runtime;
 
 /**
  * This is a Utility class that handle the available JDF Stacks from a repository using YAML
@@ -40,38 +41,41 @@ public class StacksUtil {
     @Inject
     private ForgeStacksMessages stacksMessages;
 
+    private StacksClient stacksClient;
+
+    @PostConstruct
+    void setupStacksClient() {
+        stacksClient = new StacksClient(stacksClientConfiguration, stacksMessages);
+    }
+
     /**
-     * This method verifies all available Stacks in repository
+     * This method retrieves all available Runtimes in repository
      * 
-     * @return Available Stacks
+     * @return Available Runtimes
+     */
+    @Produces
+    public List<Runtime> retrieveAvailableRuntimes() {
+        return stacksClient.getStacks().getAvailableRuntimes();
+    }
+
+    /**
+     * This method retrieves all available BOMs in repository
+     * 
+     * @return Available BOMs
      */
     @Produces
     public List<Bom> retrieveAvailableBoms() {
-        StacksClient stacksClient = new StacksClient(stacksClientConfiguration, stacksMessages);
         return stacksClient.getStacks().getAvailableBoms();
     }
 
     /**
+     * This method retrieve all available BOM versions in repository
      * 
-     * Retrieve all bom versions
-     * 
-     * @param bom
-     * @return
+     * @return Available BOM versions
      */
-    public List<BomVersion> getAllVersions(Bom bom) {
-        StacksClient stacksClient = new StacksClient(stacksClientConfiguration, stacksMessages);
-
-        List<BomVersion> bomVersions = new ArrayList<BomVersion>();
-        List<BomVersion> allVersions = stacksClient.getStacks().getAvailableBomVersions();
-
-        for (BomVersion bomVersion : allVersions) {
-            // if version corresponds to the groupId and artifactId of the bom parameter
-            if (bomVersion.getBom().getGroupId().equals(bom.getGroupId())
-                    && bomVersion.getBom().getArtifactId().equals(bom.getArtifactId())) {
-                bomVersions.add(bomVersion);
-            }
-        }
-        return bomVersions;
+    @Produces
+    public List<BomVersion> retrieveAvailableBomVersions() {
+        return stacksClient.getStacks().getAvailableBomVersions();
     }
 
 }

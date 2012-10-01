@@ -66,15 +66,21 @@ public class JdfPluginTest extends AbstractShellTest {
     @Test
     public void testShellexecuteUseStack() throws Exception {
         queueInputLines("y");
-        getShell().execute("jdf use-stack --stack " + STACK_ARTIFACT + " --version " + STACK_VERSION);
+        getShell().execute("jdf use-stack --runtime jboss-as711runtime --bom jboss-javaee-6_0-all-301");
     }
 
     @Test
-    public void testShellexecuteShowStacks() throws Exception {
+    public void testShellexecuteShowBoms() throws Exception {
         queueInputLines("y");
-        getShell().execute("jdf show-stacks");
+        getShell().execute("jdf show-boms");
     }
 
+    @Test
+    public void testShellexecuteShowRuntimes() throws Exception {
+        queueInputLines("y");
+        getShell().execute("jdf show-runtimes");
+    }
+    
     @Test
     public void testShellexecuteRefreshStacks() throws Exception {
         queueInputLines("y");
@@ -85,7 +91,7 @@ public class JdfPluginTest extends AbstractShellTest {
     @Test
     public void testAvailableStacks() throws Exception {
         List<Bom> availableStacks = stacksUtil.retrieveAvailableBoms();
-        Assert.assertTrue(availableStacks.size() == 7);
+        Assert.assertTrue(availableStacks.size() == 13);
     }
 
     @Test
@@ -116,6 +122,6 @@ public class JdfPluginTest extends AbstractShellTest {
     @Test
     public void testStackRepoFile() throws Exception {
         String repo = forgeStacksClientConfiguration.getUrl().toString();
-        Assert.assertEquals("https://raw.github.com/jboss-jdf/jdf-stack/1.0.0.CR1/stacks.yaml", repo);
+        Assert.assertEquals("https://raw.github.com/jboss-jdf/jdf-stack/1.0.0.CR2/stacks.yaml", repo);
     }
 }
