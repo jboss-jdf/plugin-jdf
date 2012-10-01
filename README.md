@@ -30,17 +30,15 @@ Assuming Forge is running, at the Forge prompt, type:
 Running the plugin
 -------------------
 
-NOTE: The first time you use the plugin, you must have a working internet connection.
-
 In Forge console type:
 
-    jdf use-stack --stack
+    jdf use-stack --runtime
 
-and press _Tab_. This will load the list of available stacks from the JBoss Developer Framework Stacks repository (by default <https://raw.github.com/jboss-jdf/jdf-stack/master/stacks.yaml>). You can then select the stack to use.
+and press _Tab_. This will load the list of available runtimes from the JBoss Developer Framework Stacks repository (by default <https://raw.github.com/jboss-jdf/jdf-stack/master/stacks.yaml>). You can then select the stack to use.
 
-Or you can also specify the version of the stack to use (by default, Forge will select the version currently recommended by JBoss Developer Framework):
+Then you can also specify the bom version to use
 
-    jdf use-stack --stack jboss-javaee-6.0-with-errai --version 1.0.0.Final
+    jdf use-stack --runtime jboss-as711runtime --bom jboss-javaee-6_0-all-301
 
 You can add multiples stacks to your project, simply run the `jdf use-stack` command again.
 
@@ -48,17 +46,20 @@ The list of available stacks is cached, and reloaded once a day. You can force a
 
     jdf refresh-stacks
 
-You can also view the available stacks by running:
+You can also view the available boms by running:
 
-    jdf show-stacks
+    jdf show-boms
 
+You can also view the available runtimes by running:
+
+    jdf show-runtimes
 
 Custom Repository
 -----------------
 
 If you want to change the default stack repository, then you will need to modify the Forge configuration.
 
-1. Edit `~/.forge/config.xml` in your favourite editor
+1. Edit `~/.forge/config.xml` in your favorite editor
 2. Add the `<stacksRepo>` element, with the custom location, to the `<jdf>` element. For example:  
 
         <configuration> 
