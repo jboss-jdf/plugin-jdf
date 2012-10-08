@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.jboss.jdf</groupId>
     <artifactId>jdf-plugin</artifactId>
-    <version>1.0.0.Final</version>
+    <version>1.0.1-SNAPSHOT</version>
     <properties>
         <forge.api.version>1.0.6.Final</forge.api.version>
         <httpclient.version>4.0.1</httpclient.version>
