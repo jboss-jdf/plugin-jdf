@@ -91,5 +91,5 @@ Troubleshooting
 
 You can turn on debugging messages:   
    
-   set VERBOSE true
+    set VERBOSE true
 
