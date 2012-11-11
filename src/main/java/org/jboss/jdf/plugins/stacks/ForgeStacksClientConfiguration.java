@@ -107,7 +107,7 @@ public class ForgeStacksClientConfiguration implements StacksClientConfiguration
         String defaultRepoPrefix = defaultRepo.substring(0, defaultRepo.lastIndexOf("jdf-stack/"));
         String configRepo = jdfConfig.getString(STACKSREPO_ELEMENT);
         // If config uses the official
-        if (configRepo.startsWith(defaultRepoPrefix)) {
+        if (configRepo != null && configRepo.startsWith(defaultRepoPrefix)) {
             // silently update the configuration
             userConfig.setProperty(JDF_ELEMENT + "." + STACKSREPO_ELEMENT, defaultRepo);
         }
