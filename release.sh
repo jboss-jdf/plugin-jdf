@@ -18,7 +18,7 @@ DIR=$(cd -P -- "$(dirname -- "$0")" && pwd -P)
 EAP_SUBJECT="\${RELEASEVERSION} of JDF Forge plugin released"
 # EAP team email To ?
 EAP_EMAIL_TO="jdf-dev@lists.jboss.org forge-dev@lists.jboss.org"
-EAP_EMAIL_FROM="\"JDF Publish Script\" <benevides@redhat.com>"
+EMAIL_FROM="\"JDF Publish Script\" <benevides@redhat.com>"
 
 
 # SCRIPT
@@ -42,11 +42,11 @@ notifyEmail()
    echo "***** Performing JDF Forge plugin release notifications"
    echo "*** Notifying JBoss JDF and Forge Dev lists team"
    subject=`eval echo $EAP_SUBJECT`
-   echo "Email from: " $EAP_EMAIL_FROM
+   echo "Email from: " $EMAIL_FROM
    echo "Email to: " $EAP_EMAIL_TO
    echo "Subject: " $subject
    # send email using /bin/mail
-   echo "See \$subject :-)" | /usr/bin/env mail -r "$EAP_EMAIL_FROM" -s "$subject" "$EAP_EMAIL_TO"
+   echo "See \$subject :-)" | /usr/bin/env mail -r "$EMAIL_FROM" -s "$subject" "$EAP_EMAIL_TO"
 
 }
 
@@ -61,7 +61,11 @@ release()
    git commit -a -m "Prepare for development of $NEWSNAPSHOTVERSION"
    git push upstrem HEAD --tags
    echo "***** JDF Forge plugin released"
-   notifyEmail
+   read -p "Do you want to send release notifcations to $EAP_EMAIL_TO[y/N]? " yn
+   case $yn in
+       [Yy]* ) notifyEmail;;
+       * ) exit;
+   esac
 }
 
 SNAPSHOTVERSION="UNDEFINED"
