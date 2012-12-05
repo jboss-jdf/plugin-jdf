@@ -1,8 +1,7 @@
 JBoss Developer Framework plugin
 =======
 Author: Rafael Benevides
-
-To simplify selecting stacks using Forge.
+Summary: Forge plugin to help you select the right JBoss stack for your project.
 
 
 What is it?
