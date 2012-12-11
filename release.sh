@@ -15,9 +15,9 @@ DIR=$(cd -P -- "$(dirname -- "$0")" && pwd -P)
 # DEFINE
 
 # EAP team email subject
-EAP_SUBJECT="\${RELEASEVERSION} of JDF Forge plugin released"
+EMAIL_SUBJECT="\${RELEASEVERSION} of JDF Forge plugin released"
 # EAP team email To ?
-EAP_EMAIL_TO="jdf-dev@lists.jboss.org forge-dev@lists.jboss.org"
+EMAIL_TO="jdf-dev@lists.jboss.org forge-dev@lists.jboss.org"
 EMAIL_FROM="\"JDF Publish Script\" <benevides@redhat.com>"
 
 
@@ -37,17 +37,16 @@ OPTIONS:
 EOF
 }
 
-notifyEmail()
+notify_email()
 {
    echo "***** Performing JDF Forge plugin release notifications"
    echo "*** Notifying JBoss JDF and Forge Dev lists team"
-   subject=`eval echo $EAP_SUBJECT`
+   subject=`eval echo $EMAIL_SUBJECT`
    echo "Email from: " $EMAIL_FROM
-   echo "Email to: " $EAP_EMAIL_TO
+   echo "Email to: " $EMAIL_TO
    echo "Subject: " $subject
-   # send email using /bin/mail
-   echo "See \$subject :-)" | /usr/bin/env mail -r "$EMAIL_FROM" -s "$subject" "$EAP_EMAIL_TO"
-
+   # send email using sendmail
+   printf "Subject: $subject\nSee \$subject :)\n" | /usr/bin/env sendmail -f "$EMAIL_FROM" "$EMAIL_TO"
 }
 
 release()
@@ -63,7 +62,7 @@ release()
    echo "***** JDF Forge plugin released"
    read -p "Do you want to send release notifcations to $EAP_EMAIL_TO[y/N]? " yn
    case $yn in
-       [Yy]* ) notifyEmail;;
+       [Yy]* ) notify_email;;
        * ) exit;
    esac
 }
