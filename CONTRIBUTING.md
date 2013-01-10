@@ -4,7 +4,9 @@ plugin-jdf Contributing Guide
 Basic Steps
 -----------
 
-To contribute with plugin JDF, clone your own fork instead of cloning the main plugin JDF repository, commit your work on topic branches and make pull requests. In detail:
+To contribute with plugin-jdf, fork the main plugin-jdf repository, clone your fork, commit your work on topic branches, and make pull requests.
+
+Here are the steps:
 
 1. [Fork](https://github.com/jboss-jdf/plugin-jdf/fork_select) the project.
 
