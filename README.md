@@ -33,7 +33,7 @@ In Forge console type:
 
     jdf use-stack --runtime
 
-and press _Tab_. This will load the list of available runtimes from the JBoss Developer Framework Stacks repository (by default <https://raw.github.com/jboss-jdf/jdf-stack/master/stacks.yaml>). You can then select the stack to use.
+and press _Tab_. This will load the list of available runtimes from the JBoss Developer Framework Stacks repository (by default <https://raw.github.com/jboss-jdf/jdf-stack/1.0.0.Final/stacks.yaml>). You can then select the stack to use.
 
 Then you can also specify the bom version to use
 
