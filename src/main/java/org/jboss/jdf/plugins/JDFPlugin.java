@@ -139,8 +139,10 @@ public class JDFPlugin implements Plugin {
                 out.print(ShellColor.BLUE, "\t\t - " + bomVersion.getId());
                 out.println(" (" + bomVersion.getBom().getName() + " - " + bomVersion.getVersion() + ")");
             }
-            out.print("\tDefault BOM: " + out.renderColor(ShellColor.GREEN, runtime.getDefaultBom().getId()));
-            out.println(" (" + runtime.getDefaultBom().getBom().getName() + " - " + runtime.getDefaultBom().getVersion() + ")");
+            if (runtime.getDefaultBom() != null){
+                out.print("\tDefault BOM: " + out.renderColor(ShellColor.GREEN, runtime.getDefaultBom().getId()));
+                out.println(" (" + runtime.getDefaultBom().getBom().getName() + " - " + runtime.getDefaultBom().getVersion() + ")");
+            }
             out.println();
         }
     }

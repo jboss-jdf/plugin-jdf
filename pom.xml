@@ -7,17 +7,17 @@
     <artifactId>jdf-plugin</artifactId>
     <version>1.0.1-SNAPSHOT</version>
     <properties>
-        <forge.api.version>1.0.6.Final</forge.api.version>
+        <forge.api.version>1.4.0.Final</forge.api.version>
         <httpclient.version>4.0.1</httpclient.version>
         <yaml.version>1.10</yaml.version>
-        <stacks-client.version>1.0.0.Final</stacks-client.version>
+        <stacks-client.version>1.0.2.CR4</stacks-client.version>
     </properties>
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>org.jboss.spec</groupId>
                 <artifactId>jboss-javaee-6.0</artifactId>
-                <version>3.0.1.Final</version>
+                <version>3.0.2.Final</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -107,12 +107,6 @@
             <artifactId>stacks-client</artifactId>
         </dependency>
     </dependencies>
-    <repositories>
-        <repository>
-            <id>JBOSS_NEXUS</id>
-            <url>http://repository.jboss.org/nexus/content/groups/public</url>
-        </repository>
-    </repositories>
     <build>
         <finalName>jdf-plugin</finalName>
         <plugins>
