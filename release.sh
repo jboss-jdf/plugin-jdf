@@ -54,7 +54,7 @@ release()
    echo "Releasing JDF Forge plugin version $RELEASEVERSION"
    $DIR/release-utils.sh -u -o $SNAPSHOTVERSION -n $RELEASEVERSION
    git commit -a -m "Prepare for $RELEASEVERSION release"
-   git tag -a $RELEASEVERSION -m "Tag $RELEASEVERSION"
+#   git tag -a $RELEASEVERSION -m "Tag $RELEASEVERSION" - Forge plugin avoid tags
    git branch $RELEASEVERSION tags/$RELEASEVERSION
    $DIR/release-utils.sh -r
    $DIR/release-utils.sh -u -o $RELEASEVERSION -n $NEWSNAPSHOTVERSION

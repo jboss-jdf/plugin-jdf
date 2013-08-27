@@ -91,7 +91,8 @@ public class JdfPluginTest extends AbstractShellTest {
     @Test
     public void testAvailableStacks() throws Exception {
         List<Bom> availableStacks = stacksUtil.retrieveAvailableBoms();
-        Assert.assertTrue(availableStacks.size() == 13);
+//        System.out.println(availableStacks.size());
+        Assert.assertTrue(availableStacks.size() == 34);
     }
 
     @Test
