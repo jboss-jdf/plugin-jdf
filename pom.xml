@@ -8,7 +8,7 @@
     <version>1.0.1-SNAPSHOT</version>
     <properties>
         <forge.api.version>1.4.0.Final</forge.api.version>
-        <httpclient.version>4.0.1</httpclient.version>
+        <httpclient.version>4.3.6</httpclient.version>
         <yaml.version>1.10</yaml.version>
         <stacks-client.version>1.0.2.CR4</stacks-client.version>
     </properties>
